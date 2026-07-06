@@ -1,58 +1,24 @@
-class Usuario{
-  final String id;
-  final String nombre;
-  final String pinCifrado;
-  final UsuarioRol rol;
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  Usuario({
-    required this.id,
-    required this.nombre,
-    required this.pinCifrado,
-    required this.rol
-  });
+part 'generated/usuario/usuario.freezed.dart';
+part 'generated/usuario/usuario.g.dart';
 
-  /// Crea una instancia de [Usuario] a partir de un mapa de datos.
-  /// Este factory se utiliza para deserializar la información proveniente
-  /// de una base de datos (como Sembast o SQLite) o de una respuesta JSON.
-  /// Se espera que el [map] contenga las llaves: id, nombre, pinCifrado y rol.
-  factory Usuario.fromMap(Map<String, dynamic> map) {
-    return Usuario(
-      id: map["id"] as String,
-      nombre: map["nombre"] as String,
-      pinCifrado: map["pinCifrado"] as String,
-      rol: UsuarioRol.values.byName(map["rol"] as String),
-    );
-  }
+@freezed
+class Usuario with _$Usuario {
+  const Usuario._();
 
-  /// Convierte la instancia actual de [Usuario] en un `Map<String, dynamic>`.
-  /// Útil para serializar el objeto antes de persistirlo en una base de datos
-  /// o enviarlo a través de una petición de red. Las llaves generadas
-  /// coinciden exactamente con las requeridas por el método [Usuario.fromMap].
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'nombre': nombre,
-      'pinCifrado': pinCifrado,
-      'rol': rol.name, 
-    };
-  }
+  const factory Usuario({
+    required String id,
+    required String nombre,
+    required String pinCifrado,
+    required UsuarioRol rol,
+  }) = _Usuario;
 
-  /// Crea una copia de la instancia actual de [Usuario] modificando únicamente
-  /// los campos que se pasen como argumentos. Los campos que no se especifiquen
-  /// conservarán su valor original.
-  Usuario copyWith({
-    String? id,
-    String? nombre,
-    String? pinCifrado,
-    UsuarioRol? rol,
-  }) {
-    return Usuario(
-      id: id ?? this.id,
-      nombre: nombre ?? this.nombre,
-      pinCifrado: pinCifrado ?? this.pinCifrado,
-      rol: rol ?? this.rol,
-    );
-  }
+  factory Usuario.fromJson(Map<String, dynamic> json) => _$UsuarioFromJson(json);
+
+  factory Usuario.fromMap(Map<String, dynamic> map) => Usuario.fromJson(map);
+
+  Map<String, dynamic> toMap() => toJson();
 }
 
 /// Define los niveles de acceso y privilegios estáticos dentro del sistema.
@@ -60,7 +26,7 @@ class Usuario{
 /// errores tipográficos en la base de datos y permite evaluar fácilmente 
 /// qué pantallas o botones mostrar en la interfaz de usuario dependiendo 
 /// de la persona que inicie sesión.
-enum UsuarioRol{
+enum UsuarioRol {
   admministrador,
-  vendedor
+  vendedor,
 }
