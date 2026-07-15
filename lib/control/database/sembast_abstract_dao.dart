@@ -1,29 +1,51 @@
 import 'package:sembast/sembast.dart';
 
+/// Excepción personalizada para centralizar y estandarizar los errores 
+/// provenientes del acceso a datos, manteniendo la causa original.
+class DaoException implements Exception {
+  final String message;
+  final Object? cause;
+
+  DaoException(this.message, [this.cause]);
+
+  @override
+  String toString() => 'DaoException: $message${cause != null ? ' (Causa: $cause)' : ''}';
+}
+
+/// Clase abstracta base para los DAOs (Data Access Objects) utilizando Sembast.
+/// Proporciona las operaciones CRUD estándar para cualquier entidad de tipo [T].
 abstract class SembastDao<T> {
   final Database database;
   final StoreRef<String, Map<String, dynamic>> store;
 
-  SembastDao.withStore(this.database, this.store);
-
-  Map<String, dynamic> toJson(T item);
-  T fromJson(Map<String, dynamic> json);
-
-    SembastDao(this.database, String storeName)
+  /// Constructor principal que inicializa la base de datos y crea la referencia
+  /// al almacén a partir de su nombre [storeName].
+  SembastDao(this.database, String storeName)
       : store = stringMapStoreFactory.store(storeName);
 
-  Future<List<T>> findRange({int offset = 0, int? limit}) async {
+  /// Constructor alternativo que permite inyectar directamente la referencia
+  /// del almacén ya creada. Útil para pruebas o configuraciones avanzadas.
+  SembastDao.withStore(this.database, this.store);
+
+  /// Convierte una entidad de tipo [T] a un mapa JSON compatible con Sembast.
+  Map<String, dynamic> toJson(T item);
+
+  /// Construye una entidad de tipo [T] a partir de un mapa JSON proveniente de Sembast.
+  T fromJson(Map<String, dynamic> json);
+
+  /// Recupera una lista paginada de registros del almacén.
+  /// [offset] indica cuántos registros saltar antes de empezar a devolver 
+  /// resultados (debe ser >= 0).
+  /// [limit] define la cantidad máxima de registros a devolver (si se provee, debe ser > 0).
+  Future<List<T>> findRange({int offset = 0, int? limit}) {
     if (offset < 0) {
-      throw ArgumentError("El valor de Offset no debe ser menor a 0");
+      throw ArgumentError('El valor de offset no debe ser menor a 0.');
     }
-
     if (limit != null && limit <= 0) {
-      throw ArgumentError(
-        "El valor del limit debe de ser mayor que cero y no puede ser null",
-      );
+      throw ArgumentError('El valor de limit debe ser mayor a 0.');
     }
 
-    try {
+    return _runDbOperation(() async {
       final finder = Finder(
         offset: offset,
         limit: limit,
@@ -32,82 +54,80 @@ abstract class SembastDao<T> {
 
       final snapshots = await store.find(database, finder: finder);
       return snapshots.map((snapshot) => fromJson(snapshot.value)).toList();
-    } on DatabaseException catch (e) {
-      print('Error específico de Sembast en findRange: ${e.message}');
-      rethrow;
-    } catch (e) {
-      print('Error insesperado con el método findRange: $e');
-      throw Exception('Error al leer los datos de la base de datos');
-    }
+    }, 'findRange');
   }
 
-  Future<T?> findById(String id) async {
-    if (id.trim().isEmpty) {
-      throw ArgumentError("El id no puede ser vacío");
-    }
+  /// Busca y devuelve un registro específico a partir de su [id].
+  /// Retorna la entidad [T] si se encuentra, o `null` si el registro no existe.
+  Future<T?> findById(String id) {
+    _validateId(id);
 
-    try {
+    return _runDbOperation(() async {
       final snapshot = await store.record(id).getSnapshot(database);
       if (snapshot == null) {
         return null;
       }
       return fromJson(snapshot.value);
-    } on DatabaseException catch (e) {
-      print('Error específico de Sembast en findById: ${e.message}');
-      rethrow;
-    } catch (e) {
-      print('Error insesperado con el método findById: $e');
-      throw Exception('Error al leer los datos de la base de datos');
-    }
+    }, 'findById');
   }
 
-  Future<void> put(String id, T item) async {
-    if (id.trim().isEmpty) {
-      throw ArgumentError("El id no puede ser vacío");
-    }
+  /// Inserta un nuevo registro o actualiza uno existente identificado por su [id].
+  /// El parámetro [item] es la entidad a guardar.
+  Future<void> put(String id, T item) {
+    _validateId(id);
 
     final json = toJson(item);
     if (json.isEmpty) {
-      throw ArgumentError("El item no puede ser vacío");
+      throw ArgumentError('El item serializado no puede estar vacío.');
     }
 
-    try {
-      await store.record(id).put(database, json);
-    } on DatabaseException catch (e) {
-      print('Error específico de Sembast en put: ${e.message}');
-      rethrow;
-    } catch (e) {
-      print('Error insesperado con el método put: $e');
-      throw Exception('Error al guardar el registro en la base de datos');
-    }
+    return _runDbOperation(
+      () => store.record(id).put(database, json),
+      'put',
+    );
   }
 
-  Future<bool> delete(String id) async {
+  /// Elimina de la base de datos el registro asociado al [id].
+  /// Retorna `true` si el registro se eliminó exitosamente, o `false` si 
+  /// el registro no existía.
+  Future<bool> delete(String id) {
+    _validateId(id);
+
+    return _runDbOperation(() async {
+      final deletedKey = await store.record(id).delete(database);
+      return deletedKey != null;
+    }, 'delete');
+  }
+
+  /// Devuelve el número total de registros almacenados en este store.
+  Future<int> count() {
+    return _runDbOperation(() => store.count(database), 'count');
+  }
+
+  /// Valida que el [id] proporcionado no sea nulo ni esté vacío.
+  void _validateId(String id) {
     if (id.trim().isEmpty) {
-      throw ArgumentError("El id no puede ser vacío");
-    }
-
-    try {
-      final deleted = await store.record(id).delete(database);
-      return deleted != null;
-    } on DatabaseException catch (e) {
-      print('Error específico de Sembast en delete: ${e.message}');
-      rethrow;
-    } catch (e) {
-      print('Error insesperado con el método delete: $e');
-      throw Exception('Error al eliminar el registro en la base de datos');
+      throw ArgumentError('El id no puede estar vacío.');
     }
   }
 
-  Future<int> count() async {
+  /// Método envoltorio (wrapper) para ejecutar operaciones de Sembast.
+  /// Atrapa las excepciones comunes, estandariza los errores lanzados hacia 
+  /// la capa superior mediante [DaoException], y preserva el `StackTrace` 
+  /// original para no obstaculizar la depuración.
+  Future<R> _runDbOperation<R>(
+    Future<R> Function() operation,
+    String methodName,
+  ) async {
     try {
-      return await store.count(database);
+      return await operation();
     } on DatabaseException catch (e) {
-      print('Error específico de Sembast en count: ${e.message}');
-      rethrow;
-    } catch (e) {
-      print('Error insesperado con el método count: $e');
-      throw Exception('Error al contar los registros de la base de datos');
+      throw DaoException('Error específico de Sembast en $methodName', e);
+    } catch (e, stackTrace) {
+      Error.throwWithStackTrace(
+        DaoException('Error inesperado en $methodName', e),
+        stackTrace,
+      );
     }
   }
 }
