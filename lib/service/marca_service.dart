@@ -153,7 +153,7 @@ class MarcaService {
     final marcaActualizada = marcaExistente.copyWith(
       nombreMarca: normalizedName,
     );
-    _marcaDao.put(id, marcaActualizada);
+    await _marcaDao.put(id, marcaActualizada);
 
     return marcaActualizada;
   }
