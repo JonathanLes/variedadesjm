@@ -1,0 +1,50 @@
+import 'package:flutter/material.dart';
+import '../themes/colors.dart';
+
+import '../widgets/app_header.dart';
+import '../widgets/app_bottom_navigation.dart';
+
+class AppLayout extends StatelessWidget {
+  // Esta variable es la magia del layout: recibirá la vista que queramos
+  // mostrar en el centro (Home, Ventas, Gastos, etc.)
+  final Widget child;
+
+  const AppLayout({
+    super.key,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.white, 
+
+      // ----------------------------------------------------------------
+      // ZONA SUPERIOR (Header)
+      // ----------------------------------------------------------------
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(70.0), 
+        child: SafeArea( 
+          child: const AppHeader(), 
+        ),
+      ),
+
+      // ----------------------------------------------------------------
+      //  ZONA CENTRAL (Contenido)
+      // ----------------------------------------------------------------
+      // Aquí se inyecta la vista que le pasemos al layout. 
+      body: child,
+
+      // ----------------------------------------------------------------
+      //  ZONA INFERIOR (Bottom Navigation)
+      // ----------------------------------------------------------------
+      bottomNavigationBar: AppBottomNavigation(
+        currentIndex: 0, 
+        onItemTapped: (index) {
+          // Aquí podemos manejar la navegación entre vistas según el índice
+          print('Pestaña seleccionada: $index');
+        },
+      ),
+    );
+  }
+}
