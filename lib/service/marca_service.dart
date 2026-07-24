@@ -1,5 +1,5 @@
 import "package:variedadesjm/entity/marca.dart";
-import "package:variedadesjm/control/marca_dao.dart";
+import "package:variedadesjm/controllers/marca_dao.dart";
 
 class BrandNameRequeridedExpection implements Exception {
   final String mensaje =

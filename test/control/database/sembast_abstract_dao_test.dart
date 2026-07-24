@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sembast/sembast_memory.dart';
-import 'package:variedadesjm/control/database/sembast_abstract_dao.dart';
+import 'package:variedadesjm/controllers/database/sembast_abstract_dao.dart';
 
 // ===========================================================================
 // CLASES DUMMY PARA TESTING

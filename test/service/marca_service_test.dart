@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sembast/sembast_memory.dart';
 
 import 'package:variedadesjm/entity/marca.dart';
-import 'package:variedadesjm/control/marca_dao.dart';
+import 'package:variedadesjm/controllers/marca_dao.dart';
 import 'package:variedadesjm/service/marca_service.dart'; 
 
 void main() {

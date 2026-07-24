@@ -1,7 +1,7 @@
 import 'package:sembast/sembast.dart';
-import 'package:variedadesjm/control/database/sembast_abstract_dao.dart';
+import 'package:variedadesjm/controllers/database/sembast_abstract_dao.dart';
 import 'package:variedadesjm/entity/marca.dart';
-import 'package:variedadesjm/control/database/sembast_stores.dart';
+import 'package:variedadesjm/controllers/database/sembast_stores.dart';
 
 
 class MarcaDAO extends SembastDao<Marca>{
