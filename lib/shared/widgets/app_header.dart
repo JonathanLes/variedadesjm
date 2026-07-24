@@ -35,7 +35,8 @@ class AppHeader extends StatelessWidget {
           Expanded(
             child: Center(
               child: Image.asset(
-                'assets/logo.png', 
+                // Por el momento se puso erroneamente el nombre de la carpeta, hay que cambiar ese logo
+                'cambiar_logo/logo.png', 
                 height: 50, 
                 // errorBuilder muestra un texto temporal si la imagen aún no existe
                 errorBuilder: (context, error, stackTrace) {
