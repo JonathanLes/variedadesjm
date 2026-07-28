@@ -26,11 +26,11 @@ class AppLogo extends StatelessWidget {
         // Le agregamos el texto que lleva debajo
         const SizedBox(height: 8.0),
         const Text(
-          'VARIEDADES\nJM',
+          'VARIEDADES JM',
           textAlign: TextAlign.center,
           style: TextStyle(
             color: AppColors.white, 
-            fontSize: 20,
+            fontSize: 15,
             fontWeight: FontWeight.bold,
           ),
         ),
