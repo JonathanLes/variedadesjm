@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:variedadesjm/shared/widgets/app_logo.dart';
 import '../themes/colors.dart';
 import '../themes/spacing.dart';
 import 'app_notification_button.dart'; 
+
 
 class AppHeader extends StatelessWidget {
   const AppHeader({super.key});
@@ -32,22 +34,13 @@ class AppHeader extends StatelessWidget {
           ),
 
           // LOGOTIPO (Centro)
-          Expanded(
+          // LOGOTIPO (Centro)
+          const Expanded(
             child: Center(
-              child: Image.asset(
-                // Por el momento se puso erroneamente el nombre de la carpeta, hay que cambiar ese logo
-                'cambiar_logo/logo.png', 
-                height: 50, 
-                // errorBuilder muestra un texto temporal si la imagen aún no existe
-                errorBuilder: (context, error, stackTrace) {
-                  return const Text(
-                    'VARIEDADES JM',
-                    style: TextStyle(
-                      color: AppColors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  );
-                },
+              // Simplemente mandamos a llamar a nuestro componente AppLogo directamente
+              child: AppLogo(
+                height: 40,
+                width: 40,
               ),
             ),
           ),

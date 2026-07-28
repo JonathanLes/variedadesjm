@@ -3,6 +3,7 @@ import '../themes/colors.dart';
 
 import '../widgets/app_header.dart';
 import '../widgets/app_bottom_navigation.dart';
+import '../widgets/app_drawer.dart';
 
 class AppLayout extends StatelessWidget {
   // Esta variable es la magia del layout: recibirá la vista que queramos
@@ -17,7 +18,12 @@ class AppLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white, 
+      backgroundColor: AppColors.white,
+
+      //-----------------------------------------------------------------
+      // ZONA MENÚ HAMBURGUESA
+      //-----------------------------------------------------------------
+      drawer: const AppDrawer(), 
 
       // ----------------------------------------------------------------
       // ZONA SUPERIOR (Header)
