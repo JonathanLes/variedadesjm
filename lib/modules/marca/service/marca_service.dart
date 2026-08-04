@@ -184,4 +184,33 @@ class MarcaService {
 
     await _marcaDao.delete(id);
   }
+
+  /// Recupera el listado completo de todas las marcas registradas en el sistema.
+  /// 
+  /// Este método es ideal para inicializar la vista principal de marcas.
+  /// Retorna una lista vacía `[]` si aún no hay marcas registradas.
+  /// Lanza [DaoException] si ocurre un problema al consultar la base de datos.
+  Future<List<Marca>> obtenerTodasLasMarcas() async {
+    return await _marcaDao.findRange();
+  }
+
+  /// Busca marcas cuyo nombre coincida total o parcialmente con el [query].
+  /// 
+  /// Elimina los espacios en blanco al inicio y al final del texto ingresado.
+  /// Si el texto resultante está vacío, devuelve automáticamente el listado 
+  /// completo de marcas llamando a [obtenerTodasLasMarcas] para optimizar 
+  /// la respuesta visual en la interfaz.
+  /// 
+  /// Retorna una lista vacía `[]` si no hay coincidencias.
+  /// Lanza [DaoException] si ocurre un fallo en la base de datos local.
+  Future<List<Marca>> buscarMarcas(String query) async {
+    final sanitizedQuery = query.trim();
+
+    // Si el usuario borra la búsqueda o solo manda espacios, devolvemos todo
+    if (sanitizedQuery.isEmpty) {
+      return obtenerTodasLasMarcas();
+    }
+
+    return await _marcaDao.buscarPorNombreMarca(sanitizedQuery);
+  }
 }
