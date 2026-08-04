@@ -4,6 +4,11 @@ import '../themes/spacing.dart';
 import '../widgets/drawer_menu_bottom.dart'; 
 import '../widgets/app_logo.dart';
 
+
+//Importaciones de las páginas que están dentro del menú hamburguesa
+import "package:variedadesjm/modules/marca/boundary/pages/marca_page.dart";
+
+
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
@@ -47,14 +52,17 @@ class AppDrawer extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.all(AppSpacing.md),
               children: [
-                
-                // ¡Mira qué fácil es agregar opciones ahora!
                 DrawerMenuButton(
                   icon: Icons.local_offer,
                   title: 'Marca',
                   onTap: () {
-                    Navigator.pop(context); // Cierra el menú
-                    print('Navegar a Marca');
+                    Navigator.pop(context); // Cierra el menú lateral primero
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MarcaPage(),
+                      ),
+                    );
                   },
                 ),
                 
