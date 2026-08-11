@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:variedadesjm/shared/widgets/app_logo.dart';
-import '../themes/colors.dart';
-import '../themes/spacing.dart';
+import 'package:variedadesjm/shared/layouts/components/app_logo.dart';
+import '../../themes/colors.dart';
+import '../../themes/spacing.dart';
 import 'app_notification_button.dart'; 
 
 

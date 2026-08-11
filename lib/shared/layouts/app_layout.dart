@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../themes/colors.dart';
 
-import '../widgets/app_header.dart';
-import '../widgets/app_bottom_navigation.dart';
-import '../widgets/app_drawer.dart';
+import 'components/app_header.dart';
+import 'components/app_bottom_navigation.dart';
+import 'components/app_drawer.dart';
 
 class AppLayout extends StatelessWidget {
   // Esta variable es la magia del layout: recibirá la vista que queramos

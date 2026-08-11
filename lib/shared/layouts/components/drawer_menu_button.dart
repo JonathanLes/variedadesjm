@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../themes/colors.dart';
-import '../themes/spacing.dart';
+import '../../themes/colors.dart';
+import '../../themes/spacing.dart';
 
 class DrawerMenuButton extends StatelessWidget {
   final IconData icon;

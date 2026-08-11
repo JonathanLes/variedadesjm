@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../themes/colors.dart';
-import '../themes/spacing.dart';
+import '../../themes/colors.dart';
+import '../../themes/spacing.dart';
 
 class AppBottomNavigation extends StatelessWidget {
   final int currentIndex;

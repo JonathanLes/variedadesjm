@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../themes/colors.dart';
-import '../themes/spacing.dart';
-import '../widgets/drawer_menu_bottom.dart'; 
-import '../widgets/app_logo.dart';
+import '../../themes/colors.dart';
+import '../../themes/spacing.dart';
+import 'drawer_menu_button.dart'; 
+import 'app_logo.dart';
 
 
 //Importaciones de las páginas que están dentro del menú hamburguesa
