@@ -1,15 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/themes/spacing.dart';
-
-/// Define las opciones de ordenamiento disponibles en la aplicación.
-enum AppSortOption {
-  /// Orden ascendente (De la A a la Z, o del más antiguo al más reciente)
-  asc,
-  
-  /// Orden descendente (De la Z a la A, o del más reciente al más antiguo)
-  desc,
-}
+import 'package:variedadesjm/shared/models/filter_params.dart';
 
 /// Un widget de filtro de ordenamiento genérico estilo Dropdown.
 ///
@@ -17,23 +9,23 @@ enum AppSortOption {
 /// despliega un menú flotante con las opciones de ordenamiento (A-Z y Z-A).
 /// El diseño está pensado para no desplazar el contenido inferior al abrirse.
 class AppSortFilter extends StatelessWidget {
-  /// La opción de ordenamiento actualmente seleccionada.
-  final AppSortOption selectedOption;
+  /// La dirección de ordenamiento actualmente seleccionada.
+  final SortDirection currentSort;
 
   /// Callback que se ejecuta cuando el usuario selecciona una nueva opción.
-  final ValueChanged<AppSortOption> onChanged;
+  final ValueChanged<SortDirection> onSortChanged;
 
   /// Crea una instancia de [AppSortFilter].
   const AppSortFilter({
     super.key,
-    required this.selectedOption,
-    required this.onChanged,
+    required this.currentSort,
+    required this.onSortChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<AppSortOption>(
-      onSelected: onChanged,
+    return PopupMenuButton<SortDirection>(
+      onSelected: onSortChanged,
       // Desplaza un poco el menú hacia abajo para que no cubra el botón
       offset: const Offset(0, 45),
       color: AppColors.white,
@@ -81,14 +73,14 @@ class AppSortFilter extends StatelessWidget {
         ),
       ),
       // Construimos las opciones del menú desplegable
-      itemBuilder: (BuildContext context) => <PopupMenuEntry<AppSortOption>>[
-        PopupMenuItem<AppSortOption>(
-          value: AppSortOption.asc,
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<SortDirection>>[
+        PopupMenuItem<SortDirection>(
+          value: SortDirection.asc,
           child: Row(
             children: [
               Icon(
                 Icons.arrow_downward,
-                color: selectedOption == AppSortOption.asc 
+                color: currentSort == SortDirection.asc 
                     ? AppColors.racingRed 
                     : AppColors.graphite,
                 size: 20,
@@ -97,10 +89,10 @@ class AppSortFilter extends StatelessWidget {
               Text(
                 'De la A a la Z',
                 style: TextStyle(
-                  color: selectedOption == AppSortOption.asc 
+                  color: currentSort == SortDirection.asc 
                       ? AppColors.racingRed 
                       : AppColors.graphite,
-                  fontWeight: selectedOption == AppSortOption.asc 
+                  fontWeight: currentSort == SortDirection.asc 
                       ? FontWeight.bold 
                       : FontWeight.normal,
                 ),
@@ -109,13 +101,13 @@ class AppSortFilter extends StatelessWidget {
           ),
         ),
         const PopupMenuDivider(height: 1),
-        PopupMenuItem<AppSortOption>(
-          value: AppSortOption.desc,
+        PopupMenuItem<SortDirection>(
+          value: SortDirection.desc,
           child: Row(
             children: [
               Icon(
                 Icons.arrow_upward,
-                color: selectedOption == AppSortOption.desc 
+                color: currentSort == SortDirection.desc 
                     ? AppColors.racingRed 
                     : AppColors.graphite,
                 size: 20,
@@ -124,10 +116,10 @@ class AppSortFilter extends StatelessWidget {
               Text(
                 'De la Z a la A',
                 style: TextStyle(
-                  color: selectedOption == AppSortOption.desc 
+                  color: currentSort == SortDirection.desc 
                       ? AppColors.racingRed 
                       : AppColors.graphite,
-                  fontWeight: selectedOption == AppSortOption.desc 
+                  fontWeight: currentSort == SortDirection.desc 
                       ? FontWeight.bold 
                       : FontWeight.normal,
                 ),

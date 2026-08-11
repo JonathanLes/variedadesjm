@@ -1,5 +1,6 @@
 import "package:variedadesjm/modules/marca/entity/marca.dart";
 import "package:variedadesjm/modules/marca/control/marca_dao.dart";
+import 'package:variedadesjm/shared/models/filter_params.dart';
 
 class BrandNameRequeridedExpection implements Exception {
   final String mensaje =
@@ -212,5 +213,29 @@ class MarcaService {
     }
 
     return await _marcaDao.buscarPorNombreMarca(sanitizedQuery);
+  }
+
+  /// Recupera las marcas paginadas y el conteo total en una sola llamada.
+  /// 
+  /// Recibe un objeto [FilterParams] con todas las reglas de la interfaz.
+  /// Ejecuta dos consultas simultáneas al DAO: una para obtener los datos 
+  /// de la página actual y otra para contar el total de registros que 
+  /// coinciden con los filtros.
+  /// 
+  /// Retorna un **Record** de Dart 3 que contiene:
+  /// 1. `List<Marca>`: Las marcas de la página solicitada.
+  /// 2. `int`: El total de marcas que coinciden (para la paginación).
+  Future<(List<Marca>, int)> obtenerMarcasPaginadas(FilterParams params) async {
+    // Ejecutamos ambas promesas al mismo tiempo (en paralelo) para ahorrar milisegundos
+    final results = await Future.wait([
+      _marcaDao.obtenerMarcasConFiltros(params),
+      _marcaDao.contarMarcasConFiltros(params),
+    ]);
+
+    // Extraemos los resultados respetando el tipo de dato
+    final marcas = results[0] as List<Marca>;
+    final total = results[1] as int;
+
+    return (marcas, total);
   }
 }

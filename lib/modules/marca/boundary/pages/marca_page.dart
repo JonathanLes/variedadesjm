@@ -11,6 +11,11 @@ import 'package:variedadesjm/modules/marca/boundary/widgets/nueva_marca_button.d
 import 'package:variedadesjm/modules/marca/boundary/widgets/marca_list_view.dart';
 import 'package:variedadesjm/modules/marca/boundary/pages/marca_form_bottom_sheet.dart';
 
+// Importación de los nuevos widgets compartidos
+import 'package:variedadesjm/shared/widgets/pagination/app_alphabet_filter.dart';
+import 'package:variedadesjm/shared/widgets/pagination/app_sort_filter.dart';
+import 'package:variedadesjm/shared/widgets/pagination/app_pagination.dart';
+
 /// Página principal del módulo de gestión de marcas.
 class MarcaPage extends ConsumerWidget {
   const MarcaPage({super.key});
@@ -113,6 +118,9 @@ class MarcaPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Escuchamos el estado para saber la página actual y los filtros
+    final marcaStateAsync = ref.watch(marcaControllerProvider);
+
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       body: SafeArea(
@@ -125,12 +133,63 @@ class MarcaPage extends ConsumerWidget {
               const SizedBox(height: 16),
               const MarcaSearchBar(),
               const SizedBox(height: 16),
-              const NuevaMarcaButton(),
+              
+              // Sección dinámica: Filtros y Botón Nueva Marca
+              marcaStateAsync.maybeWhen(
+                data: (estado) => Column(
+                  children: [
+                    Row(
+                      children: [
+                        const Expanded(child: NuevaMarcaButton()),
+                        const SizedBox(width: 12),
+                        AppSortFilter(
+                          currentSort: estado.filtros.sortDirection,
+                          onSortChanged: (sort) {
+                            ref.read(marcaControllerProvider.notifier).cambiarOrden(sort);
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    AppAlphabetFilter(
+                      selectedLetter: estado.filtros.initialLetter,
+                      onChanged: (letter) {
+                        ref.read(marcaControllerProvider.notifier).cambiarLetra(letter);
+                      },
+                    ),
+                  ],
+                ),
+                // Muestra solo el botón de Nueva Marca si el estado está cargando
+                orElse: () => const NuevaMarcaButton(),
+              ),
+              
               const SizedBox(height: 20),
+              
+              // Lista de Resultados
               MarcasListView(
                 onEdit: (marca) => _onEditMarca(context, marca),
                 onDelete: (marca) => _onDeleteMarca(context, ref, marca),
               ),
+
+              const SizedBox(height: 24),
+
+              // Paginación Universal
+              marcaStateAsync.maybeWhen(
+                data: (estado) => Center(
+                  child: AppPagination(
+                    currentPage: estado.filtros.page,
+                    totalItems: estado.totalItems,
+                    pageSize: estado.filtros.pageSize,
+                    itemName: 'marcas',
+                    onPageChanged: (newPage) {
+                      ref.read(marcaControllerProvider.notifier).cambiarPagina(newPage);
+                    },
+                  ),
+                ),
+                orElse: () => const SizedBox.shrink(),
+              ),
+              
+              const SizedBox(height: 24),
             ],
           ),
         ),

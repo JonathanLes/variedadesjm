@@ -16,10 +16,15 @@ class MarcasListView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Escuchamos el proveedor que ahora emite un MarcaState completo
     final marcasState = ref.watch(marcaControllerProvider);
 
     return marcasState.when(
-      data: (marcas) {
+      // Ahora recibimos el "estado" completo en lugar de solo la lista
+      data: (estado) {
+        // Extraemos la lista de marcas del nuevo estado complejo
+        final marcas = estado.marcas;
+
         if (marcas.isEmpty) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 40),
