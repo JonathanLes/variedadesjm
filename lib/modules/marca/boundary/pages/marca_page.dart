@@ -15,6 +15,7 @@ import 'package:variedadesjm/modules/marca/boundary/pages/marca_form_bottom_shee
 import 'package:variedadesjm/shared/widgets/pagination/app_alphabet_filter.dart';
 import 'package:variedadesjm/shared/widgets/pagination/app_sort_filter.dart';
 import 'package:variedadesjm/shared/widgets/pagination/app_pagination.dart';
+import 'package:variedadesjm/shared/widgets/pagination/app_back_button.dart';
 
 /// Página principal del módulo de gestión de marcas.
 class MarcaPage extends ConsumerWidget {
@@ -129,7 +130,14 @@ class MarcaPage extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const MarcaHeader(),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children:[
+                  const AppBackButton(),
+                  const SizedBox(width: 16),
+                  const Expanded(child: MarcaHeader(),)
+                ]
+              ),
               const SizedBox(height: 16),
               const MarcaSearchBar(),
               const SizedBox(height: 16),
