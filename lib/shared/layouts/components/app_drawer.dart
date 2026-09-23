@@ -8,6 +8,7 @@ import 'app_logo.dart';
 //Importaciones de las páginas que están dentro del menú hamburguesa
 import "package:variedadesjm/modules/marca/boundary/pages/marca_page.dart";
 import "package:variedadesjm/modules/categoria_zapato/boundary/pages/categoria_zapato_page.dart";
+import "package:variedadesjm/modules/cliente/boundary/pages/cliente_page.dart";
 
 
 class AppDrawer extends StatelessWidget {
@@ -85,10 +86,15 @@ class AppDrawer extends StatelessWidget {
                 // Botón de ejemplo 3
                 DrawerMenuButton(
                   icon: Icons.people,
-                  title: 'Proveedores',
+                  title: 'Clientes',
                   onTap: () {
-                    Navigator.pop(context);
-                    print('Navegar a Proveedores');
+                    Navigator.pop(context); // Cierra el menú lateral primero
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ClientePage(),
+                      ),
+                    );
                   },
                 ),
 
