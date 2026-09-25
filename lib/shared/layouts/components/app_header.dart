@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:variedadesjm/shared/layouts/components/app_logo.dart';
 import '../../themes/colors.dart';
 import '../../themes/spacing.dart';
 import 'app_notification_button.dart'; 
@@ -37,10 +36,13 @@ class AppHeader extends StatelessWidget {
           // LOGOTIPO (Centro)
           const Expanded(
             child: Center(
-              // Simplemente mandamos a llamar a nuestro componente AppLogo directamente
-              child: AppLogo(
-                height: 40,
-                width: 40,
+              child: Text(
+                'VARIEDADES JM',
+                style: TextStyle(
+                  color: AppColors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),

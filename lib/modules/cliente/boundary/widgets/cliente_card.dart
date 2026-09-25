@@ -3,16 +3,18 @@ import 'package:variedadesjm/modules/cliente/entity/cliente.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/themes/spacing.dart';
 
-/// Tarjeta individual para mostrar el resumen de datos de un cliente.
+/// Tarjeta individual para mostrar el resumen y acciones de cada cliente.
 class ClienteCard extends StatelessWidget {
   final Cliente cliente;
-  final VoidCallback? onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
   final Color avatarColor;
 
   const ClienteCard({
     super.key,
     required this.cliente,
-    this.onTap,
+    required this.onEdit,
+    required this.onDelete,
     this.avatarColor = AppColors.racingRed,
   });
 
@@ -20,6 +22,7 @@ class ClienteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
@@ -35,14 +38,11 @@ class ClienteCard extends StatelessWidget {
           width: 1.0,
         ),
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Row(
+      child: Column(
+        children: [
+          // Fila Superior: Datos del cliente
+          Row(
             children: [
-              // 1. Círculo de avatar con ícono de cliente
               CircleAvatar(
                 radius: 24,
                 backgroundColor: avatarColor,
@@ -53,8 +53,6 @@ class ClienteCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
-
-              // 2. Información del cliente (Nombre, Teléfono, Dirección)
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,16 +112,67 @@ class ClienteCard extends StatelessWidget {
                   ],
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 14),
 
-              // 3. Flecha lateral indicando navegabilidad
-              const Icon(
-                Icons.chevron_right,
-                color: AppColors.black,
-                size: 24,
+          // Fila Inferior: Botones de Acción (Editar / Eliminar)
+          Row(
+            children: [
+              Expanded(
+                child: TextButton.icon(
+                  onPressed: onEdit,
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.grey.shade100,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                  icon: const Icon(
+                    Icons.edit_outlined,
+                    size: 18,
+                    color: AppColors.racingRed,
+                  ),
+                  label: const Text(
+                    'Editar',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: AppColors.black,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextButton.icon(
+                  onPressed: onDelete,
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.grey.shade100,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    size: 18,
+                    color: AppColors.racingRed,
+                  ),
+                  label: const Text(
+                    'Eliminar',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: AppColors.black,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
