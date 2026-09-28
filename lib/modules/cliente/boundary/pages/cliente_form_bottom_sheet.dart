@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:variedadesjm/modules/cliente/entity/cliente.dart';
 import 'package:variedadesjm/modules/cliente/controller/cliente_controller.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/themes/spacing.dart';
 
-/// Formulario modal desplegable para registrar o editar un cliente.
+/// Formulario modal desplegable tipo [BottomSheet] para crear o editar un [Cliente].
+///
+/// Si [clienteAEditar] no es nulo, el formulario precargará la información existente
+/// para su edición. De lo contrario, funcionará en modo de registro de nuevo cliente.
 class ClienteFormBottomSheet extends ConsumerStatefulWidget {
+  /// Instancia opcional de [Cliente] a editar.
   final Cliente? clienteAEditar;
 
   const ClienteFormBottomSheet({
@@ -18,14 +23,35 @@ class ClienteFormBottomSheet extends ConsumerStatefulWidget {
   ConsumerState<ClienteFormBottomSheet> createState() => _ClienteFormBottomSheetState();
 }
 
+/// Estado interno de [ClienteFormBottomSheet] encargado de gestionar los
+/// controladores de formulario, la aplicación de máscaras y la persistencia de datos.
 class _ClienteFormBottomSheetState extends ConsumerState<ClienteFormBottomSheet> {
+  /// Clave global para la validación de los campos del formulario.
   final _formKey = GlobalKey<FormState>();
+
+  /// Controlador de texto para el campo del nombre del cliente.
   late final TextEditingController _nombreController;
+
+  /// Controlador de texto para el campo del apellido del cliente.
   late final TextEditingController _apellidoController;
+
+  /// Controlador de texto para el campo del número telefónico.
   late final TextEditingController _telefonoController;
+
+  /// Controlador de texto para el campo opcional de la dirección.
   late final TextEditingController _direccionController;
+
+  /// Bandera de estado que indica si se está ejecutando una petición asíncrona de guardado.
   bool _isLoading = false;
 
+  /// Formateador de texto para aplicar una máscara numérica al número telefónico (ej: 7000-0000).
+  final _telefonoMaskFormatter = MaskTextInputFormatter(
+    mask: '####-####',
+    filter: {"#": RegExp(r'[0-9]')},
+    type: MaskAutoCompletionType.lazy,
+  );
+
+  /// Evalúa si el modal se encuentra en modo edición o creación.
   bool get _isEditing => widget.clienteAEditar != null;
 
   @override
@@ -33,7 +59,13 @@ class _ClienteFormBottomSheetState extends ConsumerState<ClienteFormBottomSheet>
     super.initState();
     _nombreController = TextEditingController(text: widget.clienteAEditar?.nombre ?? '');
     _apellidoController = TextEditingController(text: widget.clienteAEditar?.apellido ?? '');
-    _telefonoController = TextEditingController(text: widget.clienteAEditar?.telefono ?? '');
+    
+    // Si existe un teléfono precargado, se le aplica la máscara al inicializar.
+    final telefonoInicial = widget.clienteAEditar?.telefono ?? '';
+    _telefonoController = TextEditingController(
+      text: _telefonoMaskFormatter.maskText(telefonoInicial),
+    );
+
     _direccionController = TextEditingController(text: widget.clienteAEditar?.direccion ?? '');
   }
 
@@ -46,6 +78,10 @@ class _ClienteFormBottomSheetState extends ConsumerState<ClienteFormBottomSheet>
     super.dispose();
   }
 
+  /// Valida y procesa los datos del formulario enviándolos al [ClienteController].
+  ///
+  /// En caso de éxito, cierra el modal y muestra un [SnackBar] de confirmación.
+  /// Si ocurre un error, muestra un mensaje explicativo en pantalla.
   Future<void> _guardarCliente() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -53,13 +89,14 @@ class _ClienteFormBottomSheetState extends ConsumerState<ClienteFormBottomSheet>
 
     try {
       final controller = ref.read(clienteControllerProvider.notifier);
+      final telefonoIngresado = _telefonoController.text.trim();
 
       if (_isEditing) {
         await controller.actualizarCliente(
           widget.clienteAEditar!.id,
           _nombreController.text.trim(),
           _apellidoController.text.trim(),
-          _telefonoController.text.trim(),
+          telefonoIngresado,
           _direccionController.text.trim().isEmpty ? null : _direccionController.text.trim(),
         );
       } else {
@@ -68,7 +105,7 @@ class _ClienteFormBottomSheetState extends ConsumerState<ClienteFormBottomSheet>
           id,
           _nombreController.text.trim(),
           _apellidoController.text.trim(),
-          _telefonoController.text.trim(),
+          telefonoIngresado,
           _direccionController.text.trim().isEmpty ? null : _direccionController.text.trim(),
         );
       }
@@ -77,7 +114,9 @@ class _ClienteFormBottomSheetState extends ConsumerState<ClienteFormBottomSheet>
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_isEditing ? 'Cliente actualizado exitosamente' : 'Cliente guardado exitosamente'),
+            content: Text(
+              _isEditing ? 'Cliente actualizado exitosamente' : 'Cliente guardado exitosamente',
+            ),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
           ),
@@ -118,7 +157,7 @@ class _ClienteFormBottomSheetState extends ConsumerState<ClienteFormBottomSheet>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Cabecera del Modal
+              // Cabecera del Modal con Título y Botón de Cierre
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -163,16 +202,25 @@ class _ClienteFormBottomSheetState extends ConsumerState<ClienteFormBottomSheet>
               ),
               const SizedBox(height: AppSpacing.md),
 
-              // Campo Teléfono
+              // Campo Teléfono con Máscara
               TextFormField(
                 controller: _telefonoController,
                 keyboardType: TextInputType.phone,
+                inputFormatters: [_telefonoMaskFormatter],
                 decoration: const InputDecoration(
                   labelText: 'Teléfono *',
+                  hintText: '0000-0000',
                   border: OutlineInputBorder(),
                 ),
-                validator: (value) =>
-                    value == null || value.trim().isEmpty ? 'El teléfono es obligatorio' : null,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'El teléfono es obligatorio';
+                  }
+                  if (value.length < 9) {
+                    return 'Ingresa un número de teléfono válido (8 dígitos)';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: AppSpacing.md),
 
@@ -186,7 +234,7 @@ class _ClienteFormBottomSheetState extends ConsumerState<ClienteFormBottomSheet>
               ),
               const SizedBox(height: AppSpacing.lg),
 
-              // Botones de Acción
+              // Botones de Acción (Cancelar / Guardar)
               Row(
                 children: [
                   Expanded(
