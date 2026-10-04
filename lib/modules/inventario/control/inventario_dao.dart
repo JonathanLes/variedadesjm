@@ -91,6 +91,13 @@ class InventarioDAO extends SembastDao<Inventario> {
     } catch (e, stackTrace) {
       Error.throwWithStackTrace(DaoException('Error inesperado en inventario', e), stackTrace);
     }
+
+  }
+
+  /// Indica si existe al menos una unidad de inventario asociada al [idZapato].
+  Future<bool> existePorZapato(String idZapato) async {
+    final count = await store.count(database, filter: Filter.equals('idZapato', idZapato));
+    return count > 0;
   }
 
   /// Cuenta la cantidad total de unidades de inventario que cumplen con los criterios especificados.

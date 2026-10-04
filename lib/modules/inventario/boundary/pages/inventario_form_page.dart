@@ -1,97 +1,450 @@
 import 'package:flutter/material.dart';
-import 'package:variedadesjm/shared/widgets/pagination/app_back_button.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:variedadesjm/modules/categoria_zapato/controllers/categoria_zapato_controller.dart';
+import 'package:variedadesjm/modules/inventario/controller/inventario_controller.dart';
+import 'package:variedadesjm/modules/inventario/entity/inventario.dart';
+import 'package:variedadesjm/modules/marca/controller/marca_controller.dart';
+import 'package:variedadesjm/modules/marca/entity/marca.dart';
+import 'package:variedadesjm/modules/categoria_zapato/entity/categoria_zapato.dart';
+import 'package:variedadesjm/modules/zapato/controller/zapato_controller.dart';
+import 'package:variedadesjm/modules/zapato/entity/zapato.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/themes/spacing.dart';
 
 import '../widgets/inventario_info_banner.dart';
 
-class InventarioFormPage extends StatelessWidget {
-  const InventarioFormPage({super.key});
+class InventarioFormPage extends ConsumerStatefulWidget {
+  final Inventario? item;
 
-  /// Ejecuta las validaciones del formulario e invoca la creación del inventario.
-  void _guardarInventario(BuildContext context) {
-    // TODO: Validar form y llamar a Riverpod
-    Navigator.pop(context);
+  const InventarioFormPage({super.key, this.item});
+
+  @override
+  ConsumerState<InventarioFormPage> createState() => _InventarioFormPageState();
+}
+
+class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _modeloController = TextEditingController();
+  final _descripcionController = TextEditingController();
+  final _precioVentaController = TextEditingController();
+  final _tallaController = TextEditingController();
+  final _cmController = TextEditingController();
+  final _colorController = TextEditingController();
+  final _precioCompraController = TextEditingController();
+  final _fechaCompraController = TextEditingController();
+
+  String? _idZapato;
+  String? _idMarca;
+  String? _idCategoria;
+  DateTime _fechaCompra = DateTime.now();
+  XFile? _imagenSeleccionada;
+  bool _crearNuevoModelo = false;
+  bool _guardando = false;
+
+  bool get _editando => widget.item != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final item = widget.item;
+    _fechaCompraController.text = _formatearFecha(_fechaCompra);
+    if (item != null) {
+      _idZapato = item.idZapato;
+      _tallaController.text = item.talla.toString();
+      _cmController.text = item.cm.toString();
+      _colorController.text = item.color ?? '';
+      _precioCompraController.text = item.precioCompra.toString();
+      _fechaCompra = item.fechaCompra;
+      _fechaCompraController.text = _formatearFecha(_fechaCompra);
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final controller in [
+      _modeloController,
+      _descripcionController,
+      _precioVentaController,
+      _tallaController,
+      _cmController,
+      _colorController,
+      _precioCompraController,
+      _fechaCompraController,
+    ]) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  String _formatearFecha(DateTime fecha) =>
+      '${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}';
+
+  Future<void> _seleccionarImagen() async {
+    final imagen = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (imagen != null && mounted) {
+      setState(() => _imagenSeleccionada = imagen);
+    }
+  }
+
+  Future<void> _seleccionarFecha() async {
+    final fecha = await showDatePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+      initialDate: _fechaCompra.isAfter(DateTime.now()) ? DateTime.now() : _fechaCompra,
+    );
+    if (fecha != null) {
+      setState(() {
+        _fechaCompra = fecha;
+        _fechaCompraController.text = _formatearFecha(fecha);
+      });
+    }
+  }
+
+  Future<void> _guardarInventario() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _guardando = true);
+    try {
+      var idZapato = _idZapato;
+      if (!_editando && _crearNuevoModelo) {
+        final nuevoIdZapato = DateTime.now().microsecondsSinceEpoch.toString();
+        await ref.read(zapatoControllerProvider.notifier).crearZapato(
+              id: nuevoIdZapato,
+              modelo: _modeloController.text,
+              idMarca: _idMarca!,
+              idCategoria: _idCategoria!,
+              precio: double.parse(_precioVentaController.text),
+              descripcion: _descripcionController.text.trim().isEmpty
+                  ? null
+                  : _descripcionController.text,
+              imagenPath: _imagenSeleccionada?.path,
+            );
+        idZapato = nuevoIdZapato;
+      }
+
+      if (idZapato == null) {
+        throw StateError('Selecciona un modelo de zapato.');
+      }
+
+      final controller = ref.read(inventarioControllerProvider.notifier);
+      if (_editando) {
+        await controller.actualizarInventario(
+          id: widget.item!.id,
+          idZapato: idZapato,
+          talla: double.parse(_tallaController.text),
+          cm: double.parse(_cmController.text),
+          precioCompra: double.parse(_precioCompraController.text),
+          fechaCompra: _fechaCompra,
+          color: _colorController.text.trim().isEmpty ? null : _colorController.text,
+        );
+      } else {
+        await controller.crearInventario(
+          id: DateTime.now().microsecondsSinceEpoch.toString(),
+          idZapato: idZapato,
+          talla: double.parse(_tallaController.text),
+          cm: double.parse(_cmController.text),
+          precioCompra: double.parse(_precioCompraController.text),
+          fechaCompra: _fechaCompra,
+          color: _colorController.text.trim().isEmpty ? null : _colorController.text,
+        );
+      }
+      if (mounted) Navigator.pop(context);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo guardar el inventario: $error')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _guardando = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final modelos = ref.watch(zapatosCatalogoProvider);
+    final marcas = ref.watch(marcasCatalogoProvider);
+    final categorias = ref.watch(categoriasZapatoCatalogoProvider);
+
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
         backgroundColor: AppColors.black,
-        leading: const Padding(
-          padding: EdgeInsets.all(8.0),
-          child: AppBackButton(iconColor: AppColors.white),
+        leading: const BackButton(color: AppColors.white),
+        title: Text(
+          _editando ? 'Editar Inventario' : 'Registrar Nuevo Par',
+          style: const TextStyle(color: AppColors.white),
         ),
-        title: const Text('Registrar Nuevo Par', style: TextStyle(color: AppColors.white)),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const InventarioInfoBanner(
-              text: "El código de inventario (SKU) se generará automáticamente con la fecha y costo de compra, y el estado inicial será 'Activo'.",
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            const Text('Modelo de zapato *', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: AppSpacing.xs),
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(border: OutlineInputBorder()),
-              items: const [],
-              onChanged: (val) {},
-              hint: const Text('Selecciona un modelo'),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Talla *', style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: AppSpacing.xs),
-                      TextFormField(decoration: const InputDecoration(border: OutlineInputBorder(), hintText: 'Ej. 9')),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Medida en CM *', style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: AppSpacing.xs),
-                      TextFormField(decoration: const InputDecoration(border: OutlineInputBorder(), hintText: 'Ej. 27.5')),
-                    ],
-                  ),
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              InventarioInfoBanner(
+                text: _crearNuevoModelo
+                    ? 'Se creará el modelo y se agregará una unidad al inventario. El código se generará automáticamente.'
+                    : 'El código de inventario se generará automáticamente y el estado inicial será Activo.',
+              ),
+              if (!_editando) ...[
+                const SizedBox(height: AppSpacing.md),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Crear un modelo nuevo'),
+                  subtitle: const Text('Desactívalo para usar un modelo ya registrado'),
+                  value: _crearNuevoModelo,
+                  onChanged: (value) => setState(() {
+                    _crearNuevoModelo = value;
+                    if (value) _idZapato = null;
+                  }),
                 ),
               ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            const Text('Precio de compra *', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: AppSpacing.xs),
-            TextFormField(
-              decoration: const InputDecoration(border: OutlineInputBorder(), prefixText: '\$ '),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => _guardarInventario(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.racingRed,
-                  foregroundColor: AppColors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+              const SizedBox(height: AppSpacing.md),
+              if (_crearNuevoModelo && !_editando)
+                _buildNuevoModelo(marcas, categorias)
+              else
+                _buildModeloExistente(modelos),
+              const SizedBox(height: AppSpacing.md),
+              _buildDatosPar(),
+              const SizedBox(height: AppSpacing.lg),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _guardando ? null : _guardarInventario,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.racingRed,
+                    foregroundColor: AppColors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: _guardando
+                      ? const CircularProgressIndicator(color: AppColors.white)
+                      : Text(_editando ? 'Guardar Cambios' : 'Registrar Par'),
                 ),
-                child: const Text('Registrar Inventario'),
               ),
-            )
-          ],
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  Widget _buildModeloExistente(AsyncValue<List<Zapato>> modelos) {
+    return _section(
+      title: 'Modelo de zapato *',
+      child: modelos.when(
+        loading: () => const LinearProgressIndicator(),
+        error: (error, _) => Text('No se pudieron cargar los modelos: $error'),
+        data: (items) => DropdownButtonFormField<String>(
+          initialValue: _idZapato,
+          isExpanded: true,
+          decoration: const InputDecoration(border: OutlineInputBorder()),
+          hint: const Text('Selecciona un modelo'),
+          items: items
+              .map((zapato) => DropdownMenuItem<String>(
+                    value: zapato.id,
+                    child: Text(zapato.modelo),
+                  ))
+              .toList(),
+          onChanged: items.isEmpty ? null : (value) => setState(() => _idZapato = value),
+          validator: (value) => value == null ? 'Selecciona un modelo' : null,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNuevoModelo(
+    AsyncValue<List<Marca>> marcas,
+    AsyncValue<List<CategoriaZapato>> categorias,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Datos del modelo', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: AppSpacing.md),
+        _campoTexto(_modeloController, 'Nombre del modelo *', 'Ej. Air Force 1',
+            validator: (value) => value == null || value.trim().length < 2
+                ? 'Introduce al menos 2 caracteres'
+                : null),
+        const SizedBox(height: AppSpacing.md),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _buildMarcaDropdown(marcas)),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(child: _buildCategoriaDropdown(categorias)),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _campoTexto(
+          _precioVentaController,
+          'Precio de venta sugerido *',
+          '0.00',
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          prefixText: '\$ ',
+          validator: _validarNumero,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _campoTexto(_descripcionController, 'Descripción', 'Detalles adicionales...', maxLines: 3),
+        const SizedBox(height: AppSpacing.md),
+        OutlinedButton.icon(
+          onPressed: _seleccionarImagen,
+          icon: const Icon(Icons.add_a_photo),
+          label: Text(_imagenSeleccionada == null ? 'Añadir imagen' : 'Cambiar imagen'),
+        ),
+        if (_imagenSeleccionada != null) ...[
+          const SizedBox(height: AppSpacing.sm),
+          SizedBox(
+            height: 120,
+            width: 120,
+            child: FutureBuilder(
+              future: _imagenSeleccionada!.readAsBytes(),
+              builder: (context, snapshot) => snapshot.hasData
+                  ? Image.memory(snapshot.data!, fit: BoxFit.cover)
+                  : const CircularProgressIndicator(),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildDatosPar() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Datos del par', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: AppSpacing.md),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _campoTexto(_tallaController, 'Talla *', 'Ej. 9', validator: _validarNumero)),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(child: _campoTexto(_cmController, 'Medida en CM *', 'Ej. 27.5', validator: _validarNumero)),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _campoTexto(_colorController, 'Color', 'Ej. Negro'),
+        const SizedBox(height: AppSpacing.md),
+        _campoTexto(
+          _precioCompraController,
+          'Precio de compra *',
+          '0.00',
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          prefixText: '\$ ',
+          validator: _validarNumero,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _campoTexto(
+          _fechaCompraController,
+          'Fecha de compra *',
+          '',
+          readOnly: true,
+          suffixIcon: const Icon(Icons.calendar_today),
+          onTap: _seleccionarFecha,
+          validator: (value) => value == null || value.isEmpty ? 'Selecciona una fecha' : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMarcaDropdown(AsyncValue<List<Marca>> marcas) => _buildRelacionDropdown<Marca>(
+        label: 'Marca *',
+        value: _idMarca,
+        values: marcas,
+        id: (item) => item.id,
+        name: (item) => item.nombreMarca,
+        onChanged: (value) => setState(() => _idMarca = value),
+      );
+
+  Widget _buildCategoriaDropdown(AsyncValue<List<CategoriaZapato>> categorias) =>
+      _buildRelacionDropdown<CategoriaZapato>(
+        label: 'Categoría *',
+        value: _idCategoria,
+        values: categorias,
+        id: (item) => item.id,
+        name: (item) => item.nombreCategoria,
+        onChanged: (value) => setState(() => _idCategoria = value),
+      );
+
+  Widget _buildRelacionDropdown<T>({
+    required String label,
+    required String? value,
+    required AsyncValue<List<T>> values,
+    required String Function(T) id,
+    required String Function(T) name,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return _section(
+      title: label,
+      child: values.when(
+        loading: () => const LinearProgressIndicator(),
+        error: (error, _) => Text('No se pudo cargar: $error'),
+        data: (items) => DropdownButtonFormField<String>(
+          initialValue: value,
+          isExpanded: true,
+          decoration: const InputDecoration(border: OutlineInputBorder()),
+          hint: const Text('Seleccionar'),
+          items: items
+              .map((item) => DropdownMenuItem<String>(value: id(item), child: Text(name(item))))
+              .toList(),
+          onChanged: items.isEmpty ? null : onChanged,
+          validator: (selected) => selected == null ? 'Selecciona una opción' : null,
+        ),
+      ),
+    );
+  }
+
+  Widget _section({required String title, required Widget child}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: AppSpacing.xs),
+        child,
+      ],
+    );
+  }
+
+  Widget _campoTexto(
+    TextEditingController controller,
+    String label,
+    String hint, {
+    String? Function(String?)? validator,
+    TextInputType? keyboardType,
+    String? prefixText,
+    Widget? suffixIcon,
+    bool readOnly = false,
+    VoidCallback? onTap,
+    int maxLines = 1,
+  }) {
+    return _section(
+      title: label,
+      child: TextFormField(
+        controller: controller,
+        readOnly: readOnly,
+        onTap: onTap,
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          border: const OutlineInputBorder(),
+          hintText: hint.isEmpty ? null : hint,
+          prefixText: prefixText,
+          suffixIcon: suffixIcon,
+        ),
+        validator: validator,
+      ),
+    );
+  }
+
+  String? _validarNumero(String? value) {
+    final numero = double.tryParse(value?.trim() ?? '');
+    return numero == null || numero <= 0 ? 'Introduce un número mayor que cero' : null;
   }
 }

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:variedadesjm/modules/categoria_zapato/controllers/categoria_zapato_controller.dart';
+import 'package:variedadesjm/modules/marca/controller/marca_controller.dart';
+import 'package:variedadesjm/modules/zapato/controller/zapato_controller.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/themes/spacing.dart';
 
-class ZapatoFilterModal extends StatelessWidget {
+class ZapatoFilterModal extends ConsumerStatefulWidget {
   const ZapatoFilterModal({super.key});
 
-  /// Muestra el modal de filtros deslizable desde la parte inferior para el catálogo de zapatos.
   static void show(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -15,18 +18,32 @@ class ZapatoFilterModal extends StatelessWidget {
     );
   }
 
-  /// Limpia los filtros activos del catálogo y cierra el modal.
-  void _limpiarFiltros(BuildContext context) {
-    Navigator.pop(context);
+  @override
+  ConsumerState<ZapatoFilterModal> createState() => _ZapatoFilterModalState();
+}
+
+class _ZapatoFilterModalState extends ConsumerState<ZapatoFilterModal> {
+  String? _idMarca;
+  String? _idCategoria;
+
+  Future<void> _aplicarFiltros() async {
+    await ref.read(zapatoControllerProvider.notifier).filtrarPorRelacion(
+          idMarca: _idMarca,
+          idCategoria: _idCategoria,
+        );
+    if (mounted) Navigator.pop(context);
   }
 
-  /// Aplica los filtros de marca y categoría, y cierra el modal.
-  void _aplicarFiltros(BuildContext context) {
-    Navigator.pop(context);
+  Future<void> _limpiarFiltros() async {
+    await ref.read(zapatoControllerProvider.notifier).filtrarPorRelacion();
+    if (mounted) Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
+    final marcas = ref.watch(marcasCatalogoProvider);
+    final categorias = ref.watch(categoriasZapatoCatalogoProvider);
+
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: const BoxDecoration(
@@ -45,36 +62,36 @@ class ZapatoFilterModal extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          const Text('Marca', style: TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: AppSpacing.xs),
-          DropdownButtonFormField<String>(
-            decoration: const InputDecoration(border: OutlineInputBorder()),
-            items: const [],
-            onChanged: (val) {},
-            hint: const Text('Todas las marcas'),
+          _buildDropdown(
+            label: 'Marca',
+            hint: 'Todas las marcas',
+            value: _idMarca,
+            data: marcas,
+            name: (item) => item.nombreMarca,
+            onChanged: (value) => setState(() => _idMarca = value),
           ),
           const SizedBox(height: AppSpacing.md),
-          const Text('Categoría', style: TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: AppSpacing.xs),
-          DropdownButtonFormField<String>(
-            decoration: const InputDecoration(border: OutlineInputBorder()),
-            items: const [],
-            onChanged: (val) {},
-            hint: const Text('Todas las categorías'),
+          _buildDropdown(
+            label: 'Categoría',
+            hint: 'Todas las categorías',
+            value: _idCategoria,
+            data: categorias,
+            name: (item) => item.nombreCategoria,
+            onChanged: (value) => setState(() => _idCategoria = value),
           ),
           const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => _limpiarFiltros(context),
+                  onPressed: _limpiarFiltros,
                   child: const Text('Limpiar', style: TextStyle(color: AppColors.graphite)),
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: () => _aplicarFiltros(context),
+                  onPressed: _aplicarFiltros,
                   icon: const Icon(Icons.filter_alt_outlined),
                   label: const Text('Aplicar'),
                   style: ElevatedButton.styleFrom(
@@ -87,6 +104,37 @@ class ZapatoFilterModal extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDropdown<T>({
+    required String label,
+    required String hint,
+    required String? value,
+    required AsyncValue<List<T>> data,
+    required String Function(T) name,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: AppSpacing.xs),
+        data.when(
+          loading: () => const LinearProgressIndicator(),
+          error: (error, _) => Text('No se pudo cargar $label: $error'),
+          data: (items) => DropdownButtonFormField<String>(
+            initialValue: value,
+            isExpanded: true,
+            decoration: const InputDecoration(border: OutlineInputBorder()),
+            hint: Text(hint),
+            items: items
+                .map((item) => DropdownMenuItem<String>(value: (item as dynamic).id as String, child: Text(name(item))))
+                .toList(),
+            onChanged: items.isEmpty ? null : onChanged,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -5,6 +5,7 @@ import 'package:variedadesjm/modules/marca/entity/marca.dart';
 import 'package:variedadesjm/modules/marca/service/marca_service.dart';
 // Importación del modelo de filtros universal
 import 'package:variedadesjm/shared/models/filter_params.dart';
+import 'package:variedadesjm/modules/zapato/control/zapato_dao.dart';
 
 /// Representa el estado completo y reactivo de la pantalla de marcas.
 /// 
@@ -53,8 +54,8 @@ final marcaServiceProvider = FutureProvider<MarcaService>((ref) async {
   return MarcaService(
     marcaDao: marcaDao,
     checkBrandInUse: (marcaId) async {
-      // TODO: Conectar con el DAO de Productos/Zapatos cuando lo construyas
-      return false;
+      final db = await ref.read(sembastDatabaseProvider.future);
+      return ZapatoDAO(db).existePorMarca(marcaId);
     },
   );
 });
@@ -190,4 +191,11 @@ class MarcaController extends AsyncNotifier<MarcaState> {
 // Provider global para exponer el MarcaController a la UI
 final marcaControllerProvider = AsyncNotifierProvider<MarcaController, MarcaState>(() {
   return MarcaController();
+});
+
+/// Lista completa para selectores de otras vistas. No usa la paginación de la
+/// pantalla principal de marcas.
+final marcasCatalogoProvider = FutureProvider<List<Marca>>((ref) async {
+  final service = await ref.watch(marcaServiceProvider.future);
+  return service.obtenerTodasLasMarcas();
 });

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/themes/spacing.dart';
 // Se asume la ruta correcta de tu AppSearchBar
 // import 'package:variedadesjm/shared/widgets/app_search_bar.dart'; 
 
-class InventarioFilterModal extends StatelessWidget {
+import '../../controller/inventario_controller.dart';
+import '../../../zapato/controller/zapato_controller.dart';
+
+class InventarioFilterModal extends ConsumerStatefulWidget {
   const InventarioFilterModal({super.key});
 
   /// Muestra el modal de filtros deslizable desde la parte inferior de la pantalla.
@@ -17,20 +21,39 @@ class InventarioFilterModal extends StatelessWidget {
     );
   }
 
-  /// Limpia los filtros activos y cierra el modal.
-  void _limpiarFiltros(BuildContext context) {
-    // TODO: Lógica para limpiar filtros en el controlador Riverpod
-    Navigator.pop(context);
+  @override
+  ConsumerState<InventarioFilterModal> createState() => _InventarioFilterModalState();
+}
+
+class _InventarioFilterModalState extends ConsumerState<InventarioFilterModal> {
+  final _queryController = TextEditingController();
+  String? _idZapato;
+
+  @override
+  void dispose() {
+    _queryController.dispose();
+    super.dispose();
   }
 
-  /// Aplica los filtros seleccionados, ejecuta la búsqueda y cierra el modal.
-  void _aplicarFiltros(BuildContext context) {
-    // TODO: Lógica para aplicar filtros en el controlador Riverpod
-    Navigator.pop(context);
+  /// Limpia los filtros activos y cierra el modal.
+  Future<void> _limpiarFiltros(BuildContext context) async {
+    await ref.read(inventarioControllerProvider.notifier).aplicarFiltrosEspeciales();
+    await ref.read(inventarioControllerProvider.notifier).buscarInventario('');
+    if (context.mounted) Navigator.pop(context);
+  }
+
+  /// Aplica la búsqueda escrita y cierra el modal cuando termina de recargar la lista.
+  Future<void> _aplicarFiltros(BuildContext context) async {
+    await ref.read(inventarioControllerProvider.notifier).aplicarFiltrosEspeciales(
+      idZapato: _idZapato,
+    );
+    await ref.read(inventarioControllerProvider.notifier).buscarInventario(_queryController.text);
+    if (context.mounted) Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
+    final modelos = ref.watch(zapatosCatalogoProvider);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: const BoxDecoration(
@@ -57,15 +80,32 @@ class InventarioFilterModal extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           const Text('Búsqueda general', style: TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: AppSpacing.xs),
-          // AppSearchBar(onChanged: (val) {}, hintText: 'Buscar por código o color...'),
+          TextField(
+            controller: _queryController,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              hintText: 'Buscar por código o color...',
+            ),
+          ),
           const SizedBox(height: AppSpacing.md),
           const Text('Modelo de zapato', style: TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: AppSpacing.xs),
-          DropdownButtonFormField<String>(
-            decoration: const InputDecoration(border: OutlineInputBorder()),
-            items: const [],
-            onChanged: (val) {},
-            hint: const Text('Todos los modelos'),
+          modelos.when(
+            loading: () => const LinearProgressIndicator(),
+            error: (error, _) => Text('No se pudieron cargar los modelos: $error'),
+            data: (items) => DropdownButtonFormField<String>(
+              initialValue: _idZapato,
+              isExpanded: true,
+              decoration: const InputDecoration(border: OutlineInputBorder()),
+              items: items
+                  .map((zapato) => DropdownMenuItem<String>(
+                        value: zapato.id,
+                        child: Text(zapato.modelo),
+                      ))
+                  .toList(),
+              onChanged: items.isEmpty ? null : (val) => setState(() => _idZapato = val),
+              hint: const Text('Todos los modelos'),
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           Row(

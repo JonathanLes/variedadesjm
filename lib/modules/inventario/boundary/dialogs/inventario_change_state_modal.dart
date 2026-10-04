@@ -1,42 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/themes/spacing.dart';
-import '../widgets/inventario_status_badge.dart';
+import '../../controller/inventario_controller.dart';
+import '../../entity/inventario.dart';
 
-class InventarioChangeStateModal extends StatefulWidget {
-  final EstadoInventario estadoActual;
+class InventarioChangeStateModal extends ConsumerStatefulWidget {
+  final Inventario item;
 
-  const InventarioChangeStateModal({super.key, required this.estadoActual});
+  const InventarioChangeStateModal({super.key, required this.item});
 
   /// Muestra el modal para cambiar el estado de un par específico.
-  static void show(BuildContext context, EstadoInventario estadoActual) {
+  static void show(BuildContext context, Inventario item) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => InventarioChangeStateModal(estadoActual: estadoActual),
+      builder: (context) => InventarioChangeStateModal(item: item),
     );
   }
 
   @override
-  State<InventarioChangeStateModal> createState() => _InventarioChangeStateModalState();
+  ConsumerState<InventarioChangeStateModal> createState() =>
+      _InventarioChangeStateModalState();
 }
 
-class _InventarioChangeStateModalState extends State<InventarioChangeStateModal> {
-  late EstadoInventario _estadoSeleccionado;
+class _InventarioChangeStateModalState
+    extends ConsumerState<InventarioChangeStateModal> {
+  late EstadoZapato _estadoSeleccionado;
 
   @override
   void initState() {
     super.initState();
-    _estadoSeleccionado = widget.estadoActual;
+    _estadoSeleccionado = widget.item.estado;
   }
 
   /// Guarda el nuevo estado en la base de datos y cierra el modal.
-  void _guardarEstado() {
-    // TODO: Ejecutar controlador de Riverpod para actualizar estado en Sembast
-    Navigator.pop(context);
+  Future<void> _guardarEstado() async {
+    try {
+      await ref
+          .read(inventarioControllerProvider.notifier)
+          .cambiarEstadoInventario(widget.item.id, _estadoSeleccionado);
+      if (mounted) Navigator.pop(context);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$error')));
+      }
+    }
   }
 
   @override
@@ -61,28 +75,31 @@ class _InventarioChangeStateModalState extends State<InventarioChangeStateModal>
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          const Text('Selecciona el nuevo estado', style: TextStyle(fontWeight: FontWeight.w600)),
+          const Text(
+            'Selecciona el nuevo estado',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: AppSpacing.sm),
-          RadioListTile<EstadoInventario>(
+          RadioListTile<EstadoZapato>(
             title: const Text('Activo'),
             subtitle: const Text('Disponible para venta'),
-            value: EstadoInventario.activo,
+            value: EstadoZapato.activo,
             groupValue: _estadoSeleccionado,
             activeColor: Colors.green,
             onChanged: (val) => setState(() => _estadoSeleccionado = val!),
           ),
-          RadioListTile<EstadoInventario>(
+          RadioListTile<EstadoZapato>(
             title: const Text('Reservado'),
             subtitle: const Text('En proceso de apartado'),
-            value: EstadoInventario.reservado,
+            value: EstadoZapato.reservado,
             activeColor: Colors.orange,
             groupValue: _estadoSeleccionado,
             onChanged: (val) => setState(() => _estadoSeleccionado = val!),
           ),
-          RadioListTile<EstadoInventario>(
+          RadioListTile<EstadoZapato>(
             title: const Text('Vendido'),
             subtitle: const Text('Finalizado'),
-            value: EstadoInventario.vendido,
+            value: EstadoZapato.vendido,
             activeColor: AppColors.grey,
             groupValue: _estadoSeleccionado,
             onChanged: (val) => setState(() => _estadoSeleccionado = val!),
@@ -93,7 +110,10 @@ class _InventarioChangeStateModalState extends State<InventarioChangeStateModal>
               Expanded(
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancelar', style: TextStyle(color: AppColors.graphite)),
+                  child: const Text(
+                    'Cancelar',
+                    style: TextStyle(color: AppColors.graphite),
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpacing.md),

@@ -1,34 +1,62 @@
 import 'package:flutter/material.dart';
-import 'package:variedadesjm/shared/widgets/pagination/app_back_button.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/themes/spacing.dart';
 
 import '../widgets/inventario_status_badge.dart';
 import '../dialogs/inventario_change_state_modal.dart';
+import '../../controller/inventario_controller.dart';
+import '../../entity/inventario.dart';
+import 'inventario_form_page.dart';
+import '../../../zapato/controller/zapato_controller.dart';
 
-class InventarioDetailPage extends StatelessWidget {
-  const InventarioDetailPage({super.key});
+class InventarioDetailPage extends ConsumerWidget {
+  final Inventario item;
+
+  const InventarioDetailPage({super.key, required this.item});
 
   /// Abre el modal inferior para modificar el estado del inventario.
   void _abrirModalCambioEstado(BuildContext context) {
-    InventarioChangeStateModal.show(context, EstadoInventario.activo);
+    InventarioChangeStateModal.show(context, item);
   }
 
   /// Ejecuta la eliminación lógica o física del registro tras verificar reglas de negocio.
-  void _eliminarPar(BuildContext context) {
-    // TODO: Validar si está en estado reservado. Mostrar snackbar si falla.
+  Future<void> _eliminarPar(BuildContext context, WidgetRef ref) async {
+    if (item.estado != EstadoZapato.activo) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se puede eliminar un par reservado o vendido.')),
+      );
+      return;
+    }
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar inventario'),
+        content: const Text('¿Deseas eliminar este registro? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar')),
+        ],
+      ),
+    );
+    if (confirmado != true || !context.mounted) return;
+    try {
+      await ref.read(inventarioControllerProvider.notifier).eliminarInventario(item.id);
+      if (context.mounted) Navigator.pop(context);
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$error')));
+      }
+    }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
         backgroundColor: AppColors.black,
-        leading: const Padding(
-          padding: EdgeInsets.all(8.0),
-          child: AppBackButton(iconColor: AppColors.white),
-        ),
+        leading: const BackButton(color: AppColors.white),
         title: const Text('Detalle del Par', style: TextStyle(color: AppColors.white)),
       ),
       body: ListView(
@@ -43,11 +71,15 @@ class InventarioDetailPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Air Max Runner',
+              Text(
+                  (ref.watch(zapatosCatalogoProvider).valueOrNull ?? const [])
+                      .where((zapato) => zapato.id == item.idZapato)
+                      .map((zapato) => zapato.modelo)
+                      .firstOrNull ??
+                  item.idZapato,
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
-              const InventarioStatusBadge(estado: EstadoInventario.activo),
+              InventarioStatusBadge(estado: EstadoInventario.values.byName(item.estado.name)),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
@@ -55,24 +87,51 @@ class InventarioDetailPage extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.qr_code),
             title: const Text('Código (SKU)'),
-            subtitle: const Text('INV-20250915-1200-0001'),
+            subtitle: Text(item.codigo),
           ),
           ListTile(
             leading: const Icon(Icons.straighten),
             title: const Text('Talla / Cm'),
-            subtitle: const Text('9 / 27.5 cm'),
+            subtitle: Text('${item.talla} / ${item.cm} cm'),
           ),
           ListTile(
             leading: const Icon(Icons.monetization_on_outlined),
             title: const Text('Precio de compra'),
-            subtitle: const Text('\$ 120.00'),
+            subtitle: Text('\$ ${item.precioCompra.toStringAsFixed(2)}'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.palette_outlined),
+            title: const Text('Color'),
+            subtitle: Text(item.color ?? 'Sin color registrado'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.calendar_today_outlined),
+            title: const Text('Fecha de compra'),
+            subtitle: Text(
+              '${item.fechaCompra.day.toString().padLeft(2, '0')}/'
+              '${item.fechaCompra.month.toString().padLeft(2, '0')}/'
+              '${item.fechaCompra.year}',
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () {},
+                  onPressed: () => _eliminarPar(context, ref),
+                  icon: const Icon(Icons.delete_outline, color: AppColors.racingRed),
+                  label: const Text('Eliminar', style: TextStyle(color: AppColors.racingRed)),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => InventarioFormPage(item: item),
+                    ),
+                  ),
                   icon: const Icon(Icons.edit, color: AppColors.graphite),
                   label: const Text('Editar', style: TextStyle(color: AppColors.graphite)),
                 ),

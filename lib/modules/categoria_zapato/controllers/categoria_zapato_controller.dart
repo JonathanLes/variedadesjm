@@ -4,6 +4,7 @@ import 'package:variedadesjm/modules/categoria_zapato/control/categoria_zapato_d
 import 'package:variedadesjm/modules/categoria_zapato/entity/categoria_zapato.dart';
 import 'package:variedadesjm/modules/categoria_zapato/service/categoria_zapato_service.dart';
 import 'package:variedadesjm/shared/models/filter_params.dart';
+import 'package:variedadesjm/modules/zapato/control/zapato_dao.dart';
 
 class CategoriaZapatoState {
   final List<CategoriaZapato> categorias;
@@ -41,8 +42,8 @@ final categoriaZapatoServiceProvider = FutureProvider<CategoriaZapatoService>((r
   return CategoriaZapatoService(
     categoriaDao: categoriaDao,
     checkCategoryInUse: (categoriaId) async {
-      // TODO: Conectar con el DAO de Zapatos/Productos cuando lo construyas
-      return false;
+      final db = await ref.read(sembastDatabaseProvider.future);
+      return ZapatoDAO(db).existePorCategoria(categoriaId);
     },
   );
 });
@@ -163,4 +164,12 @@ class CategoriaZapatoController extends AsyncNotifier<CategoriaZapatoState> {
 final categoriaZapatoControllerProvider =
     AsyncNotifierProvider<CategoriaZapatoController, CategoriaZapatoState>(() {
   return CategoriaZapatoController();
+});
+
+/// Lista completa para selectores de otras vistas. No usa la paginación de la
+/// pantalla principal de categorías.
+final categoriasZapatoCatalogoProvider =
+    FutureProvider<List<CategoriaZapato>>((ref) async {
+  final service = await ref.watch(categoriaZapatoServiceProvider.future);
+  return service.obtenerTodasLasCategorias();
 });

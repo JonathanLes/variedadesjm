@@ -4,6 +4,7 @@ import 'package:variedadesjm/modules/inventario/control/inventario_dao.dart';
 import 'package:variedadesjm/modules/inventario/entity/inventario.dart';
 import 'package:variedadesjm/modules/inventario/service/inventario_service.dart';
 import 'package:variedadesjm/shared/models/filter_params.dart';
+import 'package:variedadesjm/modules/zapato/control/zapato_dao.dart';
 
 class InventarioState {
   final List<Inventario> items;
@@ -50,7 +51,8 @@ final inventarioServiceProvider = FutureProvider<InventarioService>((ref) async 
   return InventarioService(
     inventarioDao: inventarioDao,
     checkZapatoExists: (zapatoId) async {
-      return true;
+      final db = await ref.read(sembastDatabaseProvider.future);
+      return (await ZapatoDAO(db).findById(zapatoId)) != null;
     },
   );
 });

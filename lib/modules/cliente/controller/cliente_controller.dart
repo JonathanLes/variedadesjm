@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sembast/sembast.dart';
 import 'package:variedadesjm/controllers/providers/sembast_core_providers.dart'; 
+import 'package:variedadesjm/controllers/database/sembast_stores.dart';
 import 'package:variedadesjm/modules/cliente/control/cliente_dao.dart';
 import 'package:variedadesjm/modules/cliente/entity/cliente.dart';
 import 'package:variedadesjm/modules/cliente/service/cliente_service.dart';
@@ -40,8 +42,13 @@ final clienteServiceProvider = FutureProvider<ClienteService>((ref) async {
   return ClienteService(
     clienteDao: clienteDao,
     checkClientInUse: (clienteId) async {
-      // TODO: Conectar con el DAO de Ventas/Facturas cuando esté listo
-      return false; 
+      final db = await ref.read(sembastDatabaseProvider.future);
+      final ventas = stringMapStoreFactory.store(SembastStores.venta);
+      final reservas = stringMapStoreFactory.store(SembastStores.reserva);
+      final filtro = Filter.equals('idCliente', clienteId);
+      final ventasCount = await ventas.count(db, filter: filtro);
+      final reservasCount = await reservas.count(db, filter: filtro);
+      return ventasCount > 0 || reservasCount > 0;
     },
   );
 });

@@ -12,6 +12,18 @@ class ZapatoDAO extends SembastDao<Zapato> {
     return Zapato.fromJson(json);
   }
 
+  /// Indica si un modelo pertenece a la marca indicada por [idMarca].
+  Future<bool> existePorMarca(String idMarca) async {
+    final count = await store.count(database, filter: Filter.equals('idMarca', idMarca));
+    return count > 0;
+  }
+
+  /// Indica si un modelo pertenece a la categoría indicada por [idCategoria].
+  Future<bool> existePorCategoria(String idCategoria) async {
+    final count = await store.count(database, filter: Filter.equals('idCategoria', idCategoria));
+    return count > 0;
+  }
+
   @override
   Map<String, dynamic> toJson(Zapato item) {
     return item.toJson();
