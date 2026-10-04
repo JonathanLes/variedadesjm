@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
@@ -16,8 +18,13 @@ class InventarioDetailPage extends ConsumerWidget {
   const InventarioDetailPage({super.key, required this.item});
 
   /// Abre el modal inferior para modificar el estado del inventario.
-  void _abrirModalCambioEstado(BuildContext context) {
-    InventarioChangeStateModal.show(context, item);
+  Future<void> _abrirModalCambioEstado(BuildContext context) async {
+    final resultado = await InventarioChangeStateModal.show(context, item);
+    if (context.mounted && resultado != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(resultado)),
+      );
+    }
   }
 
   /// Ejecuta la eliminación lógica o física del registro tras verificar reglas de negocio.
@@ -42,7 +49,9 @@ class InventarioDetailPage extends ConsumerWidget {
     if (confirmado != true || !context.mounted) return;
     try {
       await ref.read(inventarioControllerProvider.notifier).eliminarInventario(item.id);
-      if (context.mounted) Navigator.pop(context);
+      if (context.mounted) {
+        Navigator.pop(context, 'Inventario eliminado correctamente.');
+      }
     } catch (error) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$error')));
@@ -62,11 +71,7 @@ class InventarioDetailPage extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
-          Container(
-            height: 200,
-            color: AppColors.grey.withOpacity(0.1),
-            child: const Center(child: Icon(Icons.image, size: 100, color: AppColors.grey)),
-          ),
+          _buildImagen(ref),
           const SizedBox(height: AppSpacing.md),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -126,12 +131,19 @@ class InventarioDetailPage extends ConsumerWidget {
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => InventarioFormPage(item: item),
-                    ),
-                  ),
+                  onPressed: () async {
+                    final resultado = await Navigator.push<String>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => InventarioFormPage(item: item),
+                      ),
+                    );
+                    if (context.mounted && resultado != null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(resultado)),
+                      );
+                    }
+                  },
                   icon: const Icon(Icons.edit, color: AppColors.graphite),
                   label: const Text('Editar', style: TextStyle(color: AppColors.graphite)),
                 ),
@@ -152,6 +164,26 @@ class InventarioDetailPage extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildImagen(WidgetRef ref) {
+    final zapato = (ref.watch(zapatosCatalogoProvider).valueOrNull ?? const [])
+        .where((item) => item.id == this.item.idZapato)
+        .firstOrNull;
+    final path = zapato?.imagenPath;
+    return Container(
+      height: 200,
+      color: AppColors.grey.withOpacity(0.1),
+      child: path == null
+          ? const Center(child: Icon(Icons.image, size: 100, color: AppColors.grey))
+          : Image.file(
+              File(path),
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => const Center(
+                child: Icon(Icons.broken_image, size: 100, color: AppColors.grey),
+              ),
+            ),
     );
   }
 }

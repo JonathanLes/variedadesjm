@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
@@ -49,8 +51,12 @@ class ZapatoDetailPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final marcas = ref.watch(marcasCatalogoProvider).valueOrNull ?? const [];
-    final categorias = ref.watch(categoriasZapatoCatalogoProvider).valueOrNull ?? const [];
-    final marca = marcas.where((item) => item.id == zapato.idMarca).map((item) => item.nombreMarca).firstOrNull;
+    final categorias =
+        ref.watch(categoriasZapatoCatalogoProvider).valueOrNull ?? const [];
+    final marca = marcas
+        .where((item) => item.id == zapato.idMarca)
+        .map((item) => item.nombreMarca)
+        .firstOrNull;
     final categoria = categorias
         .where((item) => item.id == zapato.idCategoria)
         .map((item) => item.nombreCategoria)
@@ -80,9 +86,21 @@ class ZapatoDetailPage extends ConsumerWidget {
               color: AppColors.grey.withOpacity(0.1),
               borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
             ),
-            child: const Center(
-              child: Icon(Icons.image, size: 120, color: AppColors.grey),
-            ),
+            child: zapato.imagenPath == null
+                ? const Center(
+                    child: Icon(Icons.image, size: 120, color: AppColors.grey),
+                  )
+                : Image.file(
+                    File(zapato.imagenPath!),
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Center(
+                      child: Icon(
+                        Icons.broken_image,
+                        size: 120,
+                        color: AppColors.grey,
+                      ),
+                    ),
+                  ),
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(

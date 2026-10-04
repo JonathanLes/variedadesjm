@@ -21,19 +21,29 @@ class InventarioPage extends ConsumerWidget {
   const InventarioPage({super.key});
 
   /// Navega a la pantalla de registro de un nuevo par físico.
-  void _irARegistro(BuildContext context) {
-    Navigator.push(
+  Future<void> _irARegistro(BuildContext context) async {
+    final resultado = await Navigator.push<String>(
       context,
       MaterialPageRoute(builder: (_) => const InventarioFormPage()),
     );
+    if (context.mounted && resultado != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(resultado)),
+      );
+    }
   }
 
   /// Navega al detalle de un par de zapatos específico.
-  void _irADetalle(BuildContext context, Inventario item) {
-    Navigator.push(
+  Future<void> _irADetalle(BuildContext context, Inventario item) async {
+    final resultado = await Navigator.push<String>(
       context,
       MaterialPageRoute(builder: (_) => InventarioDetailPage(item: item)),
     );
+    if (context.mounted && resultado != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(resultado)),
+      );
+    }
   }
 
   @override
@@ -117,6 +127,10 @@ class InventarioPage extends ConsumerWidget {
                       return InventarioItemTile(
                         sku: item.codigo,
                         modelo: nombresZapato[item.idZapato] ?? item.idZapato,
+                        imagenPath: zapatos
+                            .where((zapato) => zapato.id == item.idZapato)
+                            .map((zapato) => zapato.imagenPath)
+                            .firstOrNull,
                         tallaCm: '${item.talla} / ${item.cm}',
                         estado: EstadoInventario.values.byName(item.estado.name),
                         onTap: () => _irADetalle(context, item),

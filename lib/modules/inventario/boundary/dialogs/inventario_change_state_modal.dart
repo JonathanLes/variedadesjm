@@ -11,8 +11,8 @@ class InventarioChangeStateModal extends ConsumerStatefulWidget {
   const InventarioChangeStateModal({super.key, required this.item});
 
   /// Muestra el modal para cambiar el estado de un par específico.
-  static void show(BuildContext context, Inventario item) {
-    showModalBottomSheet(
+  static Future<String?> show(BuildContext context, Inventario item) {
+    return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
@@ -43,13 +43,29 @@ class _InventarioChangeStateModalState
       await ref
           .read(inventarioControllerProvider.notifier)
           .cambiarEstadoInventario(widget.item.id, _estadoSeleccionado);
-      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        Navigator.pop(
+          context,
+          'Estado cambiado a ${_nombreEstado(_estadoSeleccionado)} correctamente.',
+        );
+      }
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('$error')));
       }
+    }
+  }
+
+  String _nombreEstado(EstadoZapato estado) {
+    switch (estado) {
+      case EstadoZapato.activo:
+        return 'Activo';
+      case EstadoZapato.reservado:
+        return 'Reservado';
+      case EstadoZapato.vendido:
+        return 'Vendido';
     }
   }
 

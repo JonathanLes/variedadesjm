@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/themes/spacing.dart';
@@ -6,6 +8,7 @@ import 'inventario_status_badge.dart';
 class InventarioItemTile extends StatelessWidget {
   final String sku;
   final String modelo;
+  final String? imagenPath;
   final String tallaCm;
   final EstadoInventario estado;
   final VoidCallback onTap;
@@ -14,6 +17,7 @@ class InventarioItemTile extends StatelessWidget {
     super.key,
     required this.sku,
     required this.modelo,
+    this.imagenPath,
     required this.tallaCm,
     required this.estado,
     required this.onTap,
@@ -37,7 +41,16 @@ class InventarioItemTile extends StatelessWidget {
                 color: AppColors.grey.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
               ),
-              child: const Icon(Icons.image_not_supported, color: AppColors.grey),
+              child: imagenPath == null
+                  ? const Icon(Icons.image_not_supported, color: AppColors.grey)
+                  : Image.file(
+                      File(imagenPath!),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.image_not_supported,
+                        color: AppColors.grey,
+                      ),
+                    ),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(

@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:variedadesjm/modules/categoria_zapato/controllers/categoria_zapato_controller.dart';
 import 'package:variedadesjm/modules/inventario/controller/inventario_controller.dart';
 import 'package:variedadesjm/modules/inventario/entity/inventario.dart';
@@ -8,7 +11,6 @@ import 'package:variedadesjm/modules/marca/controller/marca_controller.dart';
 import 'package:variedadesjm/modules/marca/entity/marca.dart';
 import 'package:variedadesjm/modules/categoria_zapato/entity/categoria_zapato.dart';
 import 'package:variedadesjm/modules/zapato/controller/zapato_controller.dart';
-import 'package:variedadesjm/modules/zapato/entity/zapato.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/themes/spacing.dart';
 
@@ -39,7 +41,7 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
   String? _idCategoria;
   DateTime _fechaCompra = DateTime.now();
   XFile? _imagenSeleccionada;
-  bool _crearNuevoModelo = false;
+  String? _imagenActualPath;
   bool _guardando = false;
 
   bool get _editando => widget.item != null;
@@ -57,6 +59,7 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
       _precioCompraController.text = item.precioCompra.toString();
       _fechaCompra = item.fechaCompra;
       _fechaCompraController.text = _formatearFecha(_fechaCompra);
+      Future.microtask(_cargarDatosModelo);
     }
   }
 
@@ -81,13 +84,51 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
       '${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}';
 
   Future<void> _seleccionarImagen() async {
-    final imagen = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
-    if (imagen != null && mounted) {
-      setState(() => _imagenSeleccionada = imagen);
+    try {
+      final imagen = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      if (imagen == null || !mounted) return;
+
+      final directory = await getApplicationDocumentsDirectory();
+      final extension = imagen.name.contains('.')
+          ? imagen.name.split('.').last
+          : 'jpg';
+      final destino = File(
+        '${directory.path}/zapato_${DateTime.now().microsecondsSinceEpoch}.$extension',
+      );
+      await File(imagen.path).copy(destino.path);
+      if (!mounted) return;
+      setState(() {
+        _imagenSeleccionada = XFile(destino.path);
+        _imagenActualPath = destino.path;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Imagen seleccionada correctamente.')),
+      );
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo seleccionar la imagen: $error')),
+        );
+      }
     }
+  }
+
+  Future<void> _cargarDatosModelo() async {
+    final zapatos = await ref.read(zapatosCatalogoProvider.future);
+    if (!mounted) return;
+    final zapato = zapatos.where((item) => item.id == _idZapato).firstOrNull;
+    if (zapato == null) return;
+    setState(() {
+      _modeloController.text = zapato.modelo;
+      _descripcionController.text = zapato.descripcion ?? '';
+      _precioVentaController.text = zapato.precioVentaSugerido.toString();
+      _idMarca = zapato.idMarca;
+      _idCategoria = zapato.idCategoria;
+      _imagenActualPath = zapato.imagenPath;
+    });
   }
 
   Future<void> _seleccionarFecha() async {
@@ -95,7 +136,9 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
       context: context,
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
-      initialDate: _fechaCompra.isAfter(DateTime.now()) ? DateTime.now() : _fechaCompra,
+      initialDate: _fechaCompra.isAfter(DateTime.now())
+          ? DateTime.now()
+          : _fechaCompra,
     );
     if (fecha != null) {
       setState(() {
@@ -111,24 +154,37 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
     setState(() => _guardando = true);
     try {
       var idZapato = _idZapato;
-      if (!_editando && _crearNuevoModelo) {
-        final nuevoIdZapato = DateTime.now().microsecondsSinceEpoch.toString();
-        await ref.read(zapatoControllerProvider.notifier).crearZapato(
-              id: nuevoIdZapato,
-              modelo: _modeloController.text,
-              idMarca: _idMarca!,
-              idCategoria: _idCategoria!,
-              precio: double.parse(_precioVentaController.text),
-              descripcion: _descripcionController.text.trim().isEmpty
-                  ? null
-                  : _descripcionController.text,
-              imagenPath: _imagenSeleccionada?.path,
-            );
-        idZapato = nuevoIdZapato;
-      }
+      final zapatoController = ref.read(zapatoControllerProvider.notifier);
+      final descripcion = _descripcionController.text.trim().isEmpty
+          ? null
+          : _descripcionController.text;
+      final imagenPath = _imagenActualPath;
 
-      if (idZapato == null) {
-        throw StateError('Selecciona un modelo de zapato.');
+      if (_editando) {
+        if (idZapato == null || _idMarca == null || _idCategoria == null) {
+          throw StateError('No se encontraron los datos del modelo.');
+        }
+        await zapatoController.actualizarZapato(
+          id: idZapato,
+          modelo: _modeloController.text,
+          idMarca: _idMarca!,
+          idCategoria: _idCategoria!,
+          precio: double.parse(_precioVentaController.text),
+          descripcion: descripcion,
+          imagenPath: imagenPath,
+        );
+      } else {
+        final nuevoIdZapato = DateTime.now().microsecondsSinceEpoch.toString();
+        await zapatoController.crearZapato(
+          id: nuevoIdZapato,
+          modelo: _modeloController.text,
+          idMarca: _idMarca!,
+          idCategoria: _idCategoria!,
+          precio: double.parse(_precioVentaController.text),
+          descripcion: descripcion,
+          imagenPath: imagenPath,
+        );
+        idZapato = nuevoIdZapato;
       }
 
       final controller = ref.read(inventarioControllerProvider.notifier);
@@ -140,7 +196,9 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
           cm: double.parse(_cmController.text),
           precioCompra: double.parse(_precioCompraController.text),
           fechaCompra: _fechaCompra,
-          color: _colorController.text.trim().isEmpty ? null : _colorController.text,
+          color: _colorController.text.trim().isEmpty
+              ? null
+              : _colorController.text,
         );
       } else {
         await controller.crearInventario(
@@ -150,10 +208,19 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
           cm: double.parse(_cmController.text),
           precioCompra: double.parse(_precioCompraController.text),
           fechaCompra: _fechaCompra,
-          color: _colorController.text.trim().isEmpty ? null : _colorController.text,
+          color: _colorController.text.trim().isEmpty
+              ? null
+              : _colorController.text,
         );
       }
-      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        Navigator.pop(
+          context,
+          _editando
+              ? 'Inventario actualizado correctamente.'
+              : 'Inventario guardado correctamente.',
+        );
+      }
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -167,7 +234,6 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    final modelos = ref.watch(zapatosCatalogoProvider);
     final marcas = ref.watch(marcasCatalogoProvider);
     final categorias = ref.watch(categoriasZapatoCatalogoProvider);
 
@@ -189,28 +255,12 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               InventarioInfoBanner(
-                text: _crearNuevoModelo
-                    ? 'Se creará el modelo y se agregará una unidad al inventario. El código se generará automáticamente.'
-                    : 'El código de inventario se generará automáticamente y el estado inicial será Activo.',
+                text: _editando
+                    ? 'Puedes actualizar los datos del modelo y del par. El código de inventario se conservará.'
+                    : 'Se creará el modelo y se agregará una unidad al inventario. El código se generará automáticamente.',
               ),
-              if (!_editando) ...[
-                const SizedBox(height: AppSpacing.md),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Crear un modelo nuevo'),
-                  subtitle: const Text('Desactívalo para usar un modelo ya registrado'),
-                  value: _crearNuevoModelo,
-                  onChanged: (value) => setState(() {
-                    _crearNuevoModelo = value;
-                    if (value) _idZapato = null;
-                  }),
-                ),
-              ],
               const SizedBox(height: AppSpacing.md),
-              if (_crearNuevoModelo && !_editando)
-                _buildNuevoModelo(marcas, categorias)
-              else
-                _buildModeloExistente(modelos),
+              _buildNuevoModelo(marcas, categorias),
               const SizedBox(height: AppSpacing.md),
               _buildDatosPar(),
               const SizedBox(height: AppSpacing.lg),
@@ -235,30 +285,6 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
     );
   }
 
-  Widget _buildModeloExistente(AsyncValue<List<Zapato>> modelos) {
-    return _section(
-      title: 'Modelo de zapato *',
-      child: modelos.when(
-        loading: () => const LinearProgressIndicator(),
-        error: (error, _) => Text('No se pudieron cargar los modelos: $error'),
-        data: (items) => DropdownButtonFormField<String>(
-          initialValue: _idZapato,
-          isExpanded: true,
-          decoration: const InputDecoration(border: OutlineInputBorder()),
-          hint: const Text('Selecciona un modelo'),
-          items: items
-              .map((zapato) => DropdownMenuItem<String>(
-                    value: zapato.id,
-                    child: Text(zapato.modelo),
-                  ))
-              .toList(),
-          onChanged: items.isEmpty ? null : (value) => setState(() => _idZapato = value),
-          validator: (value) => value == null ? 'Selecciona un modelo' : null,
-        ),
-      ),
-    );
-  }
-
   Widget _buildNuevoModelo(
     AsyncValue<List<Marca>> marcas,
     AsyncValue<List<CategoriaZapato>> categorias,
@@ -266,12 +292,19 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Datos del modelo', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Text(
+          'Datos del modelo',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: AppSpacing.md),
-        _campoTexto(_modeloController, 'Nombre del modelo *', 'Ej. Air Force 1',
-            validator: (value) => value == null || value.trim().length < 2
-                ? 'Introduce al menos 2 caracteres'
-                : null),
+        _campoTexto(
+          _modeloController,
+          'Nombre del modelo *',
+          'Ej. Air Force 1',
+          validator: (value) => value == null || value.trim().length < 2
+              ? 'Introduce al menos 2 caracteres'
+              : null,
+        ),
         const SizedBox(height: AppSpacing.md),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,27 +324,42 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
           validator: _validarNumero,
         ),
         const SizedBox(height: AppSpacing.md),
-        _campoTexto(_descripcionController, 'Descripción', 'Detalles adicionales...', maxLines: 3),
+        _campoTexto(
+          _descripcionController,
+          'Descripción',
+          'Detalles adicionales...',
+          maxLines: 3,
+        ),
         const SizedBox(height: AppSpacing.md),
         OutlinedButton.icon(
           onPressed: _seleccionarImagen,
           icon: const Icon(Icons.add_a_photo),
-          label: Text(_imagenSeleccionada == null ? 'Añadir imagen' : 'Cambiar imagen'),
-        ),
-        if (_imagenSeleccionada != null) ...[
-          const SizedBox(height: AppSpacing.sm),
-          SizedBox(
-            height: 120,
-            width: 120,
-            child: FutureBuilder(
-              future: _imagenSeleccionada!.readAsBytes(),
-              builder: (context, snapshot) => snapshot.hasData
-                  ? Image.memory(snapshot.data!, fit: BoxFit.cover)
-                  : const CircularProgressIndicator(),
-            ),
+          label: Text(
+            _imagenSeleccionada == null ? 'Añadir imagen' : 'Cambiar imagen',
           ),
+        ),
+        if (_imagenSeleccionada != null || _imagenActualPath != null) ...[
+          const SizedBox(height: AppSpacing.sm),
+          SizedBox(height: 120, width: 120, child: _buildImagenModelo()),
         ],
       ],
+    );
+  }
+
+  Widget _buildImagenModelo() {
+    if (_imagenSeleccionada != null) {
+      return FutureBuilder(
+        future: _imagenSeleccionada!.readAsBytes(),
+        builder: (context, snapshot) => snapshot.hasData
+            ? Image.memory(snapshot.data!, fit: BoxFit.cover)
+            : const CircularProgressIndicator(),
+      );
+    }
+    return Image.file(
+      File(_imagenActualPath!),
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) =>
+          const Icon(Icons.broken_image, color: AppColors.grey),
     );
   }
 
@@ -319,14 +367,31 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Datos del par', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Text(
+          'Datos del par',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: AppSpacing.md),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: _campoTexto(_tallaController, 'Talla *', 'Ej. 9', validator: _validarNumero)),
+            Expanded(
+              child: _campoTexto(
+                _tallaController,
+                'Talla *',
+                'Ej. 9',
+                validator: _validarNumero,
+              ),
+            ),
             const SizedBox(width: AppSpacing.md),
-            Expanded(child: _campoTexto(_cmController, 'Medida en CM *', 'Ej. 27.5', validator: _validarNumero)),
+            Expanded(
+              child: _campoTexto(
+                _cmController,
+                'Medida en CM *',
+                'Ej. 27.5',
+                validator: _validarNumero,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: AppSpacing.md),
@@ -348,13 +413,15 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
           readOnly: true,
           suffixIcon: const Icon(Icons.calendar_today),
           onTap: _seleccionarFecha,
-          validator: (value) => value == null || value.isEmpty ? 'Selecciona una fecha' : null,
+          validator: (value) =>
+              value == null || value.isEmpty ? 'Selecciona una fecha' : null,
         ),
       ],
     );
   }
 
-  Widget _buildMarcaDropdown(AsyncValue<List<Marca>> marcas) => _buildRelacionDropdown<Marca>(
+  Widget _buildMarcaDropdown(AsyncValue<List<Marca>> marcas) =>
+      _buildRelacionDropdown<Marca>(
         label: 'Marca *',
         value: _idMarca,
         values: marcas,
@@ -363,15 +430,16 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
         onChanged: (value) => setState(() => _idMarca = value),
       );
 
-  Widget _buildCategoriaDropdown(AsyncValue<List<CategoriaZapato>> categorias) =>
-      _buildRelacionDropdown<CategoriaZapato>(
-        label: 'Categoría *',
-        value: _idCategoria,
-        values: categorias,
-        id: (item) => item.id,
-        name: (item) => item.nombreCategoria,
-        onChanged: (value) => setState(() => _idCategoria = value),
-      );
+  Widget _buildCategoriaDropdown(
+    AsyncValue<List<CategoriaZapato>> categorias,
+  ) => _buildRelacionDropdown<CategoriaZapato>(
+    label: 'Categoría *',
+    value: _idCategoria,
+    values: categorias,
+    id: (item) => item.id,
+    name: (item) => item.nombreCategoria,
+    onChanged: (value) => setState(() => _idCategoria = value),
+  );
 
   Widget _buildRelacionDropdown<T>({
     required String label,
@@ -392,10 +460,16 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
           decoration: const InputDecoration(border: OutlineInputBorder()),
           hint: const Text('Seleccionar'),
           items: items
-              .map((item) => DropdownMenuItem<String>(value: id(item), child: Text(name(item))))
+              .map(
+                (item) => DropdownMenuItem<String>(
+                  value: id(item),
+                  child: Text(name(item)),
+                ),
+              )
               .toList(),
           onChanged: items.isEmpty ? null : onChanged,
-          validator: (selected) => selected == null ? 'Selecciona una opción' : null,
+          validator: (selected) =>
+              selected == null ? 'Selecciona una opción' : null,
         ),
       ),
     );
@@ -445,6 +519,8 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
 
   String? _validarNumero(String? value) {
     final numero = double.tryParse(value?.trim() ?? '');
-    return numero == null || numero <= 0 ? 'Introduce un número mayor que cero' : null;
+    return numero == null || numero <= 0
+        ? 'Introduce un número mayor que cero'
+        : null;
   }
 }

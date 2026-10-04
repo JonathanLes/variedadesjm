@@ -215,6 +215,7 @@ class ZapatoController extends AsyncNotifier<ZapatoState> {
         totalItems: estadoActual.totalItems + 1,
       );
     });
+    ref.invalidate(zapatosCatalogoProvider);
   }
 
   /// Ejecuta la sobreescritura de propiedades en disco y actualiza la cuadrícula de datos viva.
@@ -249,6 +250,7 @@ class ZapatoController extends AsyncNotifier<ZapatoState> {
       nuevaLista.sort((a, b) => a.modelo.compareTo(b.modelo));
       return estadoActual.copyWith(zapatos: nuevaLista);
     });
+    ref.invalidate(zapatosCatalogoProvider);
   }
 
   /// Aplica el desuso en persistencia de datos y sustrae visualmente al implicado de memoria.
@@ -267,6 +269,7 @@ class ZapatoController extends AsyncNotifier<ZapatoState> {
         totalItems: estadoActual.totalItems - 1,
       );
     });
+    ref.invalidate(zapatosCatalogoProvider);
   }
 }
 
