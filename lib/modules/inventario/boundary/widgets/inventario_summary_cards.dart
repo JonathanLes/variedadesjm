@@ -77,10 +77,9 @@ class InventarioSummaryCards extends StatelessWidget {
         ),
         leading: const Icon(Icons.inventory_2, color: AppColors.racingRed),
         title: const Text(
-          'Inventario total',
+          'Resumen del inventario',
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
-        subtitle: Text('$totalPares pares registrados'),
         children: [
           Row(
             children: [

@@ -27,11 +27,34 @@ class InventarioFilterModal extends ConsumerStatefulWidget {
 
 class _InventarioFilterModalState extends ConsumerState<InventarioFilterModal> {
   final _queryController = TextEditingController();
+  final _scrollController = ScrollController();
+  final _queryFocusNode = FocusNode();
   String? _idZapato;
 
   @override
+  void initState() {
+    super.initState();
+    _queryFocusNode.addListener(_handleQueryFocus);
+  }
+
+  void _handleQueryFocus() {
+    if (!_queryFocusNode.hasFocus) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  @override
   void dispose() {
+    _queryFocusNode.removeListener(_handleQueryFocus);
     _queryController.dispose();
+    _scrollController.dispose();
+    _queryFocusNode.dispose();
     super.dispose();
   }
 
@@ -54,16 +77,31 @@ class _InventarioFilterModalState extends ConsumerState<InventarioFilterModal> {
   @override
   Widget build(BuildContext context) {
     final modelos = ref.watch(zapatosCatalogoProvider);
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+    final viewInsets = MediaQuery.viewInsetsOf(context);
+    final availableHeight =
+        MediaQuery.sizeOf(context).height - viewInsets.bottom - AppSpacing.md;
+
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 200),
+      padding: EdgeInsets.only(bottom: viewInsets.bottom),
+      child: SafeArea(
+        top: false,
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: availableHeight.clamp(0.0, double.infinity),
+        ),
         child: Container(
           decoration: const BoxDecoration(
             color: AppColors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          child: Column(
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -85,7 +123,9 @@ class _InventarioFilterModalState extends ConsumerState<InventarioFilterModal> {
           const SizedBox(height: AppSpacing.xs),
           TextField(
             controller: _queryController,
+            focusNode: _queryFocusNode,
             textCapitalization: TextCapitalization.characters,
+            scrollPadding: const EdgeInsets.only(bottom: AppSpacing.lg),
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
               hintText: 'Buscar por código o color...',
@@ -136,6 +176,9 @@ class _InventarioFilterModalState extends ConsumerState<InventarioFilterModal> {
           ),
           const SizedBox(height: AppSpacing.md),
         ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
