@@ -53,6 +53,7 @@ class InventarioPage extends ConsumerWidget {
     final nombresZapato = {for (final zapato in zapatos) zapato.id: zapato.modelo};
 
     return AppLayout(
+      currentIndex: 3,
       child: inventario.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text('No se pudo cargar el inventario: $error')),
@@ -104,7 +105,8 @@ class InventarioPage extends ConsumerWidget {
                     Expanded(
                       child: AppSearchBar(
                         hintText: 'Buscar por código o color...',
-                        onChanged: (val) => ref.read(inventarioControllerProvider.notifier).buscarInventario(val),
+                        textCapitalization: TextCapitalization.characters,
+                        onChanged: (val) => ref.read(inventarioControllerProvider.notifier).buscarInventario(val.toUpperCase()),
                       ),
                     ),
                     const SizedBox(width: AppSpacing.sm),

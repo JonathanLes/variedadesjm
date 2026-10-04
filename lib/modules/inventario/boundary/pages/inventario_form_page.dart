@@ -13,6 +13,7 @@ import 'package:variedadesjm/modules/categoria_zapato/entity/categoria_zapato.da
 import 'package:variedadesjm/modules/zapato/controller/zapato_controller.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/themes/spacing.dart';
+import 'package:variedadesjm/shared/widgets/pagination/app_back_button.dart';
 
 import '../widgets/inventario_info_banner.dart';
 
@@ -239,21 +240,41 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
 
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: AppBar(
-        backgroundColor: AppColors.black,
-        leading: const BackButton(color: AppColors.white),
-        title: Text(
-          _editando ? 'Editar Inventario' : 'Registrar Nuevo Par',
-          style: const TextStyle(color: AppColors.white),
-        ),
-      ),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.lg,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const AppBackButton(),
+                  const SizedBox(width: AppSpacing.md),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _editando ? 'Editar Inventario' : 'Registrar Nuevo Par',
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Administra tus existencias',
+                        style: TextStyle(fontSize: 14, color: AppColors.grey),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
               InventarioInfoBanner(
                 text: _editando
                     ? 'Puedes actualizar los datos del modelo y del par. El código de inventario se conservará.'
@@ -395,7 +416,7 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
           ],
         ),
         const SizedBox(height: AppSpacing.md),
-        _campoTexto(_colorController, 'Color', 'Ej. Negro'),
+        _campoTexto(_colorController, 'Color', 'Ej. NEGRO'),
         const SizedBox(height: AppSpacing.md),
         _campoTexto(
           _precioCompraController,
@@ -502,6 +523,22 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
       title: label,
       child: TextFormField(
         controller: controller,
+        textCapitalization: label == 'Color'
+            ? TextCapitalization.characters
+            : TextCapitalization.sentences,
+        onChanged: label == 'Color'
+            ? (value) {
+                final uppercase = value.toUpperCase();
+                if (value != uppercase) {
+                  controller.value = controller.value.copyWith(
+                    text: uppercase,
+                    selection: TextSelection.collapsed(
+                      offset: uppercase.length,
+                    ),
+                  );
+                }
+              }
+            : null,
         readOnly: readOnly,
         onTap: onTap,
         maxLines: maxLines,

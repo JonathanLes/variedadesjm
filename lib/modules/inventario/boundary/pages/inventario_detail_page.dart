@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/themes/spacing.dart';
+import 'package:variedadesjm/shared/widgets/pagination/app_back_button.dart';
 
 import '../widgets/inventario_status_badge.dart';
 import '../dialogs/inventario_change_state_modal.dart';
@@ -63,14 +64,34 @@ class InventarioDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: AppBar(
-        backgroundColor: AppColors.black,
-        leading: const BackButton(color: AppColors.white),
-        title: const Text('Detalle del Par', style: TextStyle(color: AppColors.white)),
-      ),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.lg,
+        ),
         children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const AppBackButton(),
+              const SizedBox(width: AppSpacing.md),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Detalle del Par',
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Consulta la información del inventario',
+                    style: TextStyle(fontSize: 14, color: AppColors.grey),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
           _buildImagen(ref),
           const SizedBox(height: AppSpacing.md),
           Row(
@@ -119,16 +140,23 @@ class InventarioDetailPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _abrirModalCambioEstado(context),
+              icon: const Icon(Icons.sync),
+              label: const Text('Cambiar estado del par'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.racingRed,
+                foregroundColor: AppColors.white,
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                shape: const StadiumBorder(),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
           Row(
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _eliminarPar(context, ref),
-                  icon: const Icon(Icons.delete_outline, color: AppColors.racingRed),
-                  label: const Text('Eliminar', style: TextStyle(color: AppColors.racingRed)),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () async {
@@ -145,18 +173,22 @@ class InventarioDetailPage extends ConsumerWidget {
                     }
                   },
                   icon: const Icon(Icons.edit, color: AppColors.graphite),
-                  label: const Text('Editar', style: TextStyle(color: AppColors.graphite)),
+                  label: const Text('Editar'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.graphite,
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _abrirModalCambioEstado(context),
-                  icon: const Icon(Icons.sync),
-                  label: const Text('Cambiar Estado'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.racingRed,
-                    foregroundColor: AppColors.white,
+                child: OutlinedButton.icon(
+                  onPressed: () => _eliminarPar(context, ref),
+                  icon: const Icon(Icons.delete_outline, color: AppColors.racingRed),
+                  label: const Text('Eliminar'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.racingRed,
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                   ),
                 ),
               ),

@@ -54,13 +54,16 @@ class _InventarioFilterModalState extends ConsumerState<InventarioFilterModal> {
   @override
   Widget build(BuildContext context) {
     final modelos = ref.watch(zapatosCatalogoProvider);
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: const BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -82,6 +85,7 @@ class _InventarioFilterModalState extends ConsumerState<InventarioFilterModal> {
           const SizedBox(height: AppSpacing.xs),
           TextField(
             controller: _queryController,
+            textCapitalization: TextCapitalization.characters,
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
               hintText: 'Buscar por código o color...',
@@ -132,6 +136,8 @@ class _InventarioFilterModalState extends ConsumerState<InventarioFilterModal> {
           ),
           const SizedBox(height: AppSpacing.md),
         ],
+          ),
+        ),
       ),
     );
   }

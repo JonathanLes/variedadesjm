@@ -10,6 +10,7 @@ import 'package:variedadesjm/shared/widgets/pagination/app_sort_filter.dart';
 import 'package:variedadesjm/shared/widgets/pagination/app_pagination.dart';
 import 'package:variedadesjm/shared/widgets/pagination/app_back_button.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
+import 'package:variedadesjm/shared/themes/spacing.dart';
 
 /// Página principal del módulo de clientes.
 class ClientePage extends ConsumerWidget {
@@ -30,9 +31,7 @@ class ClientePage extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           '¿Eliminar cliente?',
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -60,11 +59,15 @@ class ClientePage extends ConsumerWidget {
             onPressed: () async {
               Navigator.of(dialogContext).pop();
               try {
-                await ref.read(clienteControllerProvider.notifier).eliminarCliente(cliente.id);
+                await ref
+                    .read(clienteControllerProvider.notifier)
+                    .eliminarCliente(cliente.id);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Cliente "${cliente.nombre}" eliminado correctamente'),
+                      content: Text(
+                        'Cliente "${cliente.nombre}" eliminado correctamente',
+                      ),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -83,7 +86,10 @@ class ClientePage extends ConsumerWidget {
             },
             child: const Text(
               'Eliminar',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -99,7 +105,10 @@ class ClientePage extends ConsumerWidget {
       backgroundColor: const Color(0xFFFAFAFA),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.md,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -194,7 +203,9 @@ class ClientePage extends ConsumerWidget {
                       final isEven = index % 2 == 0;
                       return ClienteCard(
                         cliente: cliente,
-                        avatarColor: isEven ? AppColors.racingRed : AppColors.black,
+                        avatarColor: isEven
+                            ? AppColors.racingRed
+                            : AppColors.black,
                         onEdit: () => _onEditCliente(context, cliente),
                         onDelete: () => _onDeleteCliente(context, ref, cliente),
                       );

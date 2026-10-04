@@ -28,14 +28,26 @@ class InventarioSummaryCards extends StatelessWidget {
         ),
         child: Row(
           children: [
-            CircleAvatar(backgroundColor: color.withOpacity(0.1), child: Icon(icon, color: color, size: 20)),
+            CircleAvatar(
+              backgroundColor: color.withOpacity(0.1),
+              child: Icon(icon, color: color, size: 20),
+            ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontSize: 11, color: AppColors.grey)),
-                  Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    title,
+                    style: const TextStyle(fontSize: 11, color: AppColors.grey),
+                  ),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -47,24 +59,66 @@ class InventarioSummaryCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            _buildCard('Total de Pares', totalPares.toString(), Icons.inventory_2, AppColors.racingRed),
-            const SizedBox(width: AppSpacing.sm),
-            _buildCard('Pares Activos', paresActivos.toString(), Icons.check_circle, Colors.green),
-          ],
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+        side: BorderSide(color: AppColors.grey.withOpacity(0.2)),
+      ),
+      child: ExpansionTile(
+        initiallyExpanded: false,
+        tilePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        childrenPadding: const EdgeInsets.fromLTRB(
+          AppSpacing.sm,
+          0,
+          AppSpacing.sm,
+          AppSpacing.sm,
         ),
-        const SizedBox(height: AppSpacing.sm),
-        Row(
-          children: [
-            _buildCard('Reservados', paresReservados.toString(), Icons.watch_later, Colors.orange),
-            const SizedBox(width: AppSpacing.sm),
-            _buildCard('Valor Total', '\$${valorTotal.toStringAsFixed(2)}', Icons.attach_money, AppColors.black),
-          ],
+        leading: const Icon(Icons.inventory_2, color: AppColors.racingRed),
+        title: const Text(
+          'Inventario total',
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
-      ],
+        subtitle: Text('$totalPares pares registrados'),
+        children: [
+          Row(
+            children: [
+              _buildCard(
+                'Total de Pares',
+                totalPares.toString(),
+                Icons.inventory_2,
+                AppColors.racingRed,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              _buildCard(
+                'Pares Activos',
+                paresActivos.toString(),
+                Icons.check_circle,
+                Colors.green,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              _buildCard(
+                'Reservados',
+                paresReservados.toString(),
+                Icons.watch_later,
+                Colors.orange,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              _buildCard(
+                'Valor Total',
+                '\$${valorTotal.toStringAsFixed(2)}',
+                Icons.attach_money,
+                AppColors.black,
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

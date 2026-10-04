@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:variedadesjm/shared/themes/spacing.dart';
 import 'package:variedadesjm/modules/categoria_zapato/entity/categoria_zapato.dart';
 import 'package:variedadesjm/modules/categoria_zapato/controllers/categoria_zapato_controller.dart';
 import 'package:variedadesjm/modules/categoria_zapato/service/categoria_zapato_service.dart';
@@ -24,17 +25,20 @@ class CategoriaZapatoPage extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => CategoriaZapatoFormBottomSheet(categoriaAEditar: categoria),
+      builder: (context) =>
+          CategoriaZapatoFormBottomSheet(categoriaAEditar: categoria),
     );
   }
 
-  void _onDeleteCategoria(BuildContext context, WidgetRef ref, CategoriaZapato categoria) {
+  void _onDeleteCategoria(
+    BuildContext context,
+    WidgetRef ref,
+    CategoriaZapato categoria,
+  ) {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           '¿Eliminar categoría?',
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -65,7 +69,10 @@ class CategoriaZapatoPage extends ConsumerWidget {
             },
             child: const Text(
               'Eliminar',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -86,7 +93,9 @@ class CategoriaZapatoPage extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Categoría "${categoria.nombreCategoria}" eliminada correctamente'),
+            content: Text(
+              'Categoría "${categoria.nombreCategoria}" eliminada correctamente',
+            ),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -122,7 +131,10 @@ class CategoriaZapatoPage extends ConsumerWidget {
       backgroundColor: const Color(0xFFFAFAFA),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.md,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -148,7 +160,9 @@ class CategoriaZapatoPage extends ConsumerWidget {
                           currentSort: estado.filtros.sortDirection,
                           onSortChanged: (sort) {
                             ref
-                                .read(categoriaZapatoControllerProvider.notifier)
+                                .read(
+                                  categoriaZapatoControllerProvider.notifier,
+                                )
                                 .cambiarOrden(sort);
                           },
                         ),
@@ -170,7 +184,8 @@ class CategoriaZapatoPage extends ConsumerWidget {
               const SizedBox(height: 20),
               CategoriasZapatoListView(
                 onEdit: (categoria) => _onEditCategoria(context, categoria),
-                onDelete: (categoria) => _onDeleteCategoria(context, ref, categoria),
+                onDelete: (categoria) =>
+                    _onDeleteCategoria(context, ref, categoria),
               ),
               const SizedBox(height: 24),
               categoriaStateAsync.maybeWhen(

@@ -125,7 +125,9 @@ class InventarioController extends AsyncNotifier<InventarioState> {
   /// Llama al método interno `_cargarConFiltros` para refrescar la lista.
   Future<void> buscarInventario(String query) async {
     if (state.value == null) return;
-    final nuevosFiltros = state.value!.filtros.copyWith(query: query).resetPage();
+    final nuevosFiltros = state.value!.filtros
+        .copyWith(query: query.trim().toUpperCase())
+        .resetPage();
     await _cargarConFiltros(nuevosFiltros);
   }
 

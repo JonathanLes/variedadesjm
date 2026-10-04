@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:variedadesjm/shared/themes/spacing.dart';
 import 'package:variedadesjm/modules/marca/entity/marca.dart';
 import 'package:variedadesjm/modules/marca/controller/marca_controller.dart';
 import 'package:variedadesjm/modules/marca/service/marca_service.dart';
@@ -36,9 +37,7 @@ class MarcaPage extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           '¿Eliminar marca?',
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -69,7 +68,10 @@ class MarcaPage extends ConsumerWidget {
             },
             child: const Text(
               'Eliminar',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -89,7 +91,9 @@ class MarcaPage extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Marca "${marca.nombreMarca}" eliminada correctamente'),
+            content: Text(
+              'Marca "${marca.nombreMarca}" eliminada correctamente',
+            ),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -126,22 +130,25 @@ class MarcaPage extends ConsumerWidget {
       backgroundColor: const Color(0xFFFAFAFA),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.md,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
-                children:[
+                children: [
                   const AppBackButton(),
                   const SizedBox(width: 16),
-                  const Expanded(child: MarcaHeader(),)
-                ]
+                  const Expanded(child: MarcaHeader()),
+                ],
               ),
               const SizedBox(height: 16),
               const MarcaSearchBar(),
               const SizedBox(height: 16),
-              
+
               // Sección dinámica: Filtros y Botón Nueva Marca
               marcaStateAsync.maybeWhen(
                 data: (estado) => Column(
@@ -153,7 +160,9 @@ class MarcaPage extends ConsumerWidget {
                         AppSortFilter(
                           currentSort: estado.filtros.sortDirection,
                           onSortChanged: (sort) {
-                            ref.read(marcaControllerProvider.notifier).cambiarOrden(sort);
+                            ref
+                                .read(marcaControllerProvider.notifier)
+                                .cambiarOrden(sort);
                           },
                         ),
                       ],
@@ -162,7 +171,9 @@ class MarcaPage extends ConsumerWidget {
                     AppAlphabetFilter(
                       selectedLetter: estado.filtros.initialLetter,
                       onChanged: (letter) {
-                        ref.read(marcaControllerProvider.notifier).cambiarLetra(letter);
+                        ref
+                            .read(marcaControllerProvider.notifier)
+                            .cambiarLetra(letter);
                       },
                     ),
                   ],
@@ -170,9 +181,9 @@ class MarcaPage extends ConsumerWidget {
                 // Muestra solo el botón de Nueva Marca si el estado está cargando
                 orElse: () => const NuevaMarcaButton(),
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Lista de Resultados
               MarcasListView(
                 onEdit: (marca) => _onEditMarca(context, marca),
@@ -190,13 +201,15 @@ class MarcaPage extends ConsumerWidget {
                     pageSize: estado.filtros.pageSize,
                     itemName: 'marcas',
                     onPageChanged: (newPage) {
-                      ref.read(marcaControllerProvider.notifier).cambiarPagina(newPage);
+                      ref
+                          .read(marcaControllerProvider.notifier)
+                          .cambiarPagina(newPage);
                     },
                   ),
                 ),
                 orElse: () => const SizedBox.shrink(),
               ),
-              
+
               const SizedBox(height: 24),
             ],
           ),
