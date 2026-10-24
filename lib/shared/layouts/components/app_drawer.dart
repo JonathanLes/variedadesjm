@@ -1,15 +1,17 @@
+/// Construye el menú lateral para navegar por catálogos y configuración.
 import 'package:flutter/material.dart';
 import '../../themes/colors.dart';
 import '../../themes/spacing.dart';
-import 'drawer_menu_button.dart'; 
+import 'drawer_menu_button.dart';
 import 'app_logo.dart';
-
 
 //Importaciones de las páginas que están dentro del menú hamburguesa
 import "package:variedadesjm/modules/marca/boundary/pages/marca_page.dart";
 import "package:variedadesjm/modules/categoria_zapato/boundary/pages/categoria_zapato_page.dart";
 import "package:variedadesjm/modules/cliente/boundary/pages/cliente_page.dart";
-
+import "package:variedadesjm/modules/configuracion/boundary/pages/configuracion_page.dart";
+import "package:variedadesjm/modules/reserva/boundary/pages/reserva_page.dart";
+import "package:variedadesjm/modules/zapato/boundary/pages/zapato_page.dart";
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -26,16 +28,13 @@ class AppDrawer extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.only(
-              top: AppSpacing.xxl, 
+              top: AppSpacing.xxl,
               bottom: AppSpacing.md,
             ),
             decoration: const BoxDecoration(
               color: AppColors.black,
               border: Border(
-                bottom: BorderSide(
-                  color: AppColors.racingRed,
-                  width: 4.0,
-                ),
+                bottom: BorderSide(color: AppColors.racingRed, width: 4.0),
               ),
             ),
             child: Column(
@@ -67,7 +66,7 @@ class AppDrawer extends StatelessWidget {
                     );
                   },
                 ),
-                
+
                 // Botón de ejemplo 2
                 DrawerMenuButton(
                   icon: Icons.category,
@@ -79,6 +78,17 @@ class AppDrawer extends StatelessWidget {
                       MaterialPageRoute(
                         builder: (context) => const CategoriaZapatoPage(),
                       ),
+                    );
+                  },
+                ),
+                DrawerMenuButton(
+                  icon: Icons.shopping_bag_outlined,
+                  title: 'Productos',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ZapatoPage()),
                     );
                   },
                 ),
@@ -97,7 +107,30 @@ class AppDrawer extends StatelessWidget {
                     );
                   },
                 ),
-
+                DrawerMenuButton(
+                  icon: Icons.settings_outlined,
+                  title: 'Configuración',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ConfiguracionPage(),
+                      ),
+                    );
+                  },
+                ),
+                DrawerMenuButton(
+                  icon: Icons.bookmark_outline,
+                  title: 'Reservas',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ReservaPage()),
+                    );
+                  },
+                ),
               ],
             ),
           ),
@@ -112,9 +145,7 @@ class AppDrawer extends StatelessWidget {
                 leading: const Icon(Icons.logout, color: AppColors.racingRed),
                 title: const Text(
                   'Cerrar sesión',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 onTap: () {
                   print('Cerrando sesión...');

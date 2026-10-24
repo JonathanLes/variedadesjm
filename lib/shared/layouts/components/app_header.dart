@@ -1,56 +1,52 @@
 import 'package:flutter/material.dart';
-import '../../themes/colors.dart';
-import '../../themes/spacing.dart';
-import 'app_notification_button.dart'; 
-
+import 'app_notification_button.dart';
 
 class AppHeader extends StatelessWidget {
-  const AppHeader({super.key});
+  final String title;
+
+  const AppHeader({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-      decoration: const BoxDecoration(
-        color: AppColors.black,
-        border: Border(
-          bottom: BorderSide(
-            color: AppColors.racingRed,
-            width: 3.0, 
-          ),
-        ),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      color: Theme.of(context).colorScheme.primary,
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // ÍCONO DE MENÚ (Izquierda)
-          IconButton(
-            icon: const Icon(Icons.menu, color: AppColors.white, size: 32),
-            onPressed: () {
-              // Esta instrucción buscará el Drawer en el AppLayout y lo abrirá
-              Scaffold.of(context).openDrawer();
-            },
+          Builder(
+            builder: (context) => IconButton(
+              tooltip: 'Abrir menú',
+              icon: const Icon(Icons.menu_rounded, size: 25),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            ),
           ),
-
-          // LOGOTIPO (Centro)
-          // LOGOTIPO (Centro)
-          const Expanded(
-            child: Center(
-              child: Text(
-                'VARIEDADES JM',
-                style: TextStyle(
-                  color: AppColors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
-
-          // BOTÓN DE NOTIFICACIONES (Derecha)
+          Text(
+            _today(),
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 2),
           const AppNotificationButton(),
         ],
       ),
     );
+  }
+
+  String _today() {
+    final now = DateTime.now();
+    return '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}';
   }
 }
