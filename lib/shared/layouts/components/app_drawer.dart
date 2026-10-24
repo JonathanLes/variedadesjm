@@ -6,6 +6,7 @@ import '../../themes/colors.dart';
 
 import 'package:variedadesjm/modules/administracion/boundary/pages/administracion_page.dart';
 import 'package:variedadesjm/modules/configuracion/boundary/pages/configuracion_page.dart';
+import 'package:variedadesjm/modules/finanzas/boundary/pages/finanzas_page.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -97,6 +98,12 @@ class AppDrawer extends StatelessWidget {
                     title: 'Administración',
                     subtitle: 'Marcas, categorías, productos, clientes y reservas.',
                     onTap: () => _open(context, const AdministracionPage()),
+                  ),
+                  _DrawerItem(
+                    icon: Icons.insights_rounded,
+                    title: 'Finanzas',
+                    subtitle: 'Estados financieros, razones y flujo de efectivo.',
+                    onTap: () => _open(context, const FinanzasPage()),
                   ),
                   _DrawerItem(
                     icon: Icons.settings_outlined,
