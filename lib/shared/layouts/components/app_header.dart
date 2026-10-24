@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'app_notification_button.dart';
+import 'app_help_button.dart';
 
 /// Encabezado claro de la app: menú, nombre del negocio y notificaciones.
 class AppHeader extends StatelessWidget {
@@ -38,7 +38,7 @@ class AppHeader extends StatelessWidget {
               ),
             ),
           ),
-          const AppNotificationButton(),
+          const AppHelpButton(),
         ],
       ),
     );

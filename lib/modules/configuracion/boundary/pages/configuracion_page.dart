@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:variedadesjm/controllers/providers/sembast_app_state_providers.dart';
-import 'package:variedadesjm/shared/layouts/app_layout.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 
-/// Permite cambiar la apariencia de la aplicación y preferencias operativas.
+/// Permite cambiar la apariencia de la aplicación.
 class ConfiguracionPage extends ConsumerWidget {
   const ConfiguracionPage({super.key});
 
@@ -12,72 +11,68 @@ class ConfiguracionPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selected = ref.watch(paletteProvider);
     final notifier = ref.read(paletteProvider.notifier);
-    return AppLayout(
-      currentIndex: 0,
-      child: ListView(
-        padding: const EdgeInsets.all(20),
+    final scheme = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Configuración')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
         children: [
-          Text(
-            'Configuración',
-            style: Theme.of(
-              context,
-            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Personaliza la apariencia del panel sin perder consistencia visual.',
-          ),
-          const SizedBox(height: 24),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Paleta de colores',
-                    style: Theme.of(context).textTheme.titleLarge,
+          const Text('Ajusta la app a tus necesidades.'),
+          const SizedBox(height: 14),
+          const Text('Colores de la app',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 4),
+          const Text('El cambio se guarda automáticamente en este dispositivo.',
+              style: TextStyle(fontSize: 12.5)),
+          const SizedBox(height: 12),
+          for (final palette in AppColors.all)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(
+                    color: identical(palette, selected)
+                        ? scheme.primary
+                        : scheme.outlineVariant,
+                    width: identical(palette, selected) ? 2 : 1,
                   ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'El cambio se guarda automáticamente en este dispositivo.',
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: ListTile(
+                  onTap: () => notifier.select(palette),
+                  minVerticalPadding: 14,
+                  leading: Icon(
+                    identical(palette, selected)
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                    color: scheme.primary,
                   ),
-                  const SizedBox(height: 18),
-                  ...AppColors.all.map(
-                    (palette) => ListTile(
-                      selected: identical(palette, selected),
-                      leading: Icon(
-                        identical(palette, selected)
-                            ? Icons.radio_button_checked
-                            : Icons.radio_button_unchecked,
-                      ),
-                      title: Text(_nameOf(palette)),
-                      onTap: () => notifier.select(palette),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children:
-                            [
-                                  palette.primary,
-                                  palette.accent,
-                                  palette.background,
-                                ]
-                                .map(
-                                  (color) => Padding(
-                                    padding: const EdgeInsets.only(left: 4),
-                                    child: CircleAvatar(
-                                      radius: 12,
-                                      backgroundColor: color,
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                      ),
-                    ),
+                  title: Text(_nameOf(palette),
+                      style: const TextStyle(fontWeight: FontWeight.w700)),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final color in [palette.primary, palette.accent, palette.background])
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: CircleAvatar(
+                            radius: 12,
+                            backgroundColor: color,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.black12),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
