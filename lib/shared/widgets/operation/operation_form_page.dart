@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:variedadesjm/controllers/providers/sembast_core_providers.dart';
 import 'package:variedadesjm/modules/cliente/boundary/pages/cliente_form_bottom_sheet.dart';
 import 'package:variedadesjm/modules/cliente/entity/cliente.dart';
+import 'package:variedadesjm/modules/inventario/boundary/pages/inventario_form_page.dart';
 import 'package:variedadesjm/modules/inventario/entity/inventario.dart';
 import 'package:variedadesjm/modules/reserva/entity/reserva.dart';
 import 'package:variedadesjm/modules/reserva_detalle/entity/reserva_detalle.dart';
@@ -341,15 +342,32 @@ class _OperationFormPageState extends ConsumerState<OperationFormPage> {
         if (query.isNotEmpty && _selected == null && matches.isEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.warning_amber_rounded, size: 18, color: AppColors.danger),
-                const SizedBox(width: 6),
-                const Expanded(
-                  child: Text(
-                    'No encontramos ese código entre los pares disponibles.',
-                    style: TextStyle(color: AppColors.danger, fontSize: 12.5),
-                  ),
+                Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, size: 18, color: AppColors.danger),
+                    const SizedBox(width: 6),
+                    const Expanded(
+                      child: Text(
+                        'No encontramos ese código entre los pares disponibles.',
+                        style: TextStyle(color: AppColors.danger, fontSize: 12.5),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const InventarioFormPage()),
+                    );
+                    ref.invalidate(existenciasProvider);
+                  },
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text('Registrar nuevo par'),
                 ),
               ],
             ),

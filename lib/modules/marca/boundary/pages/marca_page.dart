@@ -1,29 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:variedadesjm/shared/themes/spacing.dart';
 import 'package:variedadesjm/modules/marca/entity/marca.dart';
 import 'package:variedadesjm/modules/marca/controller/marca_controller.dart';
 import 'package:variedadesjm/modules/marca/service/marca_service.dart';
-
-// Importación de tus widgets individuales
-import 'package:variedadesjm/modules/marca/boundary/widgets/marca_header.dart';
 import 'package:variedadesjm/modules/marca/boundary/widgets/marca_search_bar.dart';
-import 'package:variedadesjm/modules/marca/boundary/widgets/nueva_marca_button.dart';
 import 'package:variedadesjm/modules/marca/boundary/widgets/marca_list_view.dart';
 import 'package:variedadesjm/modules/marca/boundary/pages/marca_form_bottom_sheet.dart';
-
-// Importación de los nuevos widgets compartidos
+import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/widgets/pagination/app_alphabet_filter.dart';
 import 'package:variedadesjm/shared/widgets/pagination/app_sort_filter.dart';
 import 'package:variedadesjm/shared/widgets/pagination/app_pagination.dart';
-import 'package:variedadesjm/shared/widgets/pagination/app_back_button.dart';
+import 'package:variedadesjm/shared/widgets/ui/admin_page.dart';
 
 /// Página principal del módulo de gestión de marcas.
 class MarcaPage extends ConsumerWidget {
   const MarcaPage({super.key});
 
-  /// Abre el formulario modal reutilizable pre-cargado con la marca a editar
-  void _onEditMarca(BuildContext context, Marca marca) {
+  /// Abre el formulario modal para crear una marca (o editar si se pasa una).
+  void _openForm(BuildContext context, [Marca? marca]) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -32,51 +26,15 @@ class MarcaPage extends ConsumerWidget {
     );
   }
 
-  /// Muestra un diálogo de confirmación antes de eliminar la marca
-  void _onDeleteMarca(BuildContext context, WidgetRef ref, Marca marca) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          '¿Eliminar marca?',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: Text(
-          '¿Estás seguro de que deseas eliminar la marca "${marca.nombreMarca}"?',
-          style: const TextStyle(fontSize: 14),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text(
-              'Cancelar',
-              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFB71C1C),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            onPressed: () async {
-              Navigator.of(dialogContext).pop(); // Cierra el diálogo
-              _ejecutarEliminacion(context, ref, marca);
-            },
-            child: const Text(
-              'Eliminar',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
+  /// Pide confirmación y elimina la marca.
+  Future<void> _onDeleteMarca(BuildContext context, WidgetRef ref, Marca marca) async {
+    final ok = await confirmDelete(
+      context,
+      title: '¿Eliminar marca?',
+      message: '¿Estás seguro de que deseas eliminar la marca "${marca.nombreMarca}"?',
     );
+    if (!ok || !context.mounted) return;
+    await _ejecutarEliminacion(context, ref, marca);
   }
 
   /// Llama al controller para eliminar la marca y gestiona las excepciones de negocio
@@ -91,9 +49,7 @@ class MarcaPage extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Marca "${marca.nombreMarca}" eliminada correctamente',
-            ),
+            content: Text('Marca "${marca.nombreMarca}" eliminada correctamente'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -115,7 +71,7 @@ class MarcaPage extends ConsumerWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensaje),
-        backgroundColor: Colors.red.shade800,
+        backgroundColor: AppColors.danger,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -123,98 +79,59 @@ class MarcaPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Escuchamos el estado para saber la página actual y los filtros
     final marcaStateAsync = ref.watch(marcaControllerProvider);
+    final notifier = ref.read(marcaControllerProvider.notifier);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.md,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const AppBackButton(),
-                  const SizedBox(width: 16),
-                  const Expanded(child: MarcaHeader()),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const MarcaSearchBar(),
-              const SizedBox(height: 16),
-
-              // Sección dinámica: Filtros y Botón Nueva Marca
-              marcaStateAsync.maybeWhen(
-                data: (estado) => Column(
-                  children: [
-                    Row(
-                      children: [
-                        const Expanded(child: NuevaMarcaButton()),
-                        const SizedBox(width: 12),
-                        AppSortFilter(
-                          currentSort: estado.filtros.sortDirection,
-                          onSortChanged: (sort) {
-                            ref
-                                .read(marcaControllerProvider.notifier)
-                                .cambiarOrden(sort);
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    AppAlphabetFilter(
-                      selectedLetter: estado.filtros.initialLetter,
-                      onChanged: (letter) {
-                        ref
-                            .read(marcaControllerProvider.notifier)
-                            .cambiarLetra(letter);
-                      },
-                    ),
-                  ],
+    return AdminPage(
+      title: 'Marcas',
+      subtitle: 'Registra las marcas del calzado',
+      addLabel: 'Nueva marca',
+      onAdd: () => _openForm(context),
+      children: [
+        Row(
+          children: [
+            const Expanded(child: MarcaSearchBar()),
+            marcaStateAsync.maybeWhen(
+              data: (estado) => Padding(
+                padding: const EdgeInsets.only(left: 10),
+                child: AppSortFilter(
+                  currentSort: estado.filtros.sortDirection,
+                  onSortChanged: notifier.cambiarOrden,
                 ),
-                // Muestra solo el botón de Nueva Marca si el estado está cargando
-                orElse: () => const NuevaMarcaButton(),
               ),
-
-              const SizedBox(height: 20),
-
-              // Lista de Resultados
-              MarcasListView(
-                onEdit: (marca) => _onEditMarca(context, marca),
-                onDelete: (marca) => _onDeleteMarca(context, ref, marca),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Paginación Universal
-              marcaStateAsync.maybeWhen(
-                data: (estado) => Center(
-                  child: AppPagination(
-                    currentPage: estado.filtros.page,
-                    totalItems: estado.totalItems,
-                    pageSize: estado.filtros.pageSize,
-                    itemName: 'marcas',
-                    onPageChanged: (newPage) {
-                      ref
-                          .read(marcaControllerProvider.notifier)
-                          .cambiarPagina(newPage);
-                    },
-                  ),
-                ),
-                orElse: () => const SizedBox.shrink(),
-              ),
-
-              const SizedBox(height: 24),
-            ],
-          ),
+              orElse: () => const SizedBox.shrink(),
+            ),
+          ],
         ),
-      ),
+        marcaStateAsync.maybeWhen(
+          data: (estado) => Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: AppAlphabetFilter(
+              selectedLetter: estado.filtros.initialLetter,
+              onChanged: notifier.cambiarLetra,
+            ),
+          ),
+          orElse: () => const SizedBox.shrink(),
+        ),
+        const SizedBox(height: 16),
+        MarcasListView(
+          onEdit: (marca) => _openForm(context, marca),
+          onDelete: (marca) => _onDeleteMarca(context, ref, marca),
+        ),
+        const SizedBox(height: 16),
+        marcaStateAsync.maybeWhen(
+          data: (estado) => Center(
+            child: AppPagination(
+              currentPage: estado.filtros.page,
+              totalItems: estado.totalItems,
+              pageSize: estado.filtros.pageSize,
+              itemName: 'marcas',
+              onPageChanged: notifier.cambiarPagina,
+            ),
+          ),
+          orElse: () => const SizedBox.shrink(),
+        ),
+      ],
     );
   }
 }

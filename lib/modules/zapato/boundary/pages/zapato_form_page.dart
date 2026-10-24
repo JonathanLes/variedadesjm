@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/themes/spacing.dart';
+import 'package:variedadesjm/shared/utils/image_store.dart';
 
 import 'package:variedadesjm/modules/categoria_zapato/controllers/categoria_zapato_controller.dart';
 import 'package:variedadesjm/modules/categoria_zapato/entity/categoria_zapato.dart';
@@ -23,6 +24,7 @@ class _ZapatoFormPageState extends ConsumerState<ZapatoFormPage> {
   final _precioController = TextEditingController();
   final _descripcionController = TextEditingController();
   XFile? _imagenSeleccionada;
+  String? _imagenGuardadaPath;
   String? _idMarca;
   String? _idCategoria;
   bool _guardando = false;
@@ -41,7 +43,13 @@ class _ZapatoFormPageState extends ConsumerState<ZapatoFormPage> {
       imageQuality: 85,
     );
     if (imagen != null && mounted) {
-      setState(() => _imagenSeleccionada = imagen);
+      // Se copia a una carpeta permanente: la ruta del picker es temporal.
+      final ruta = await persistShoeImage(imagen);
+      if (!mounted) return;
+      setState(() {
+        _imagenSeleccionada = XFile(ruta);
+        _imagenGuardadaPath = ruta;
+      });
     }
   }
 
@@ -63,7 +71,7 @@ class _ZapatoFormPageState extends ConsumerState<ZapatoFormPage> {
             idCategoria: _idCategoria!,
             precio: double.parse(_precioController.text.trim()),
             descripcion: _descripcionController.text,
-            imagenPath: _imagenSeleccionada?.path,
+            imagenPath: _imagenGuardadaPath,
           );
       if (mounted) Navigator.pop(context);
     } catch (error) {

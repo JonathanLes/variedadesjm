@@ -2,12 +2,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:variedadesjm/modules/gasto/entity/gasto.dart';
+import 'package:variedadesjm/modules/inventario/entity/inventario.dart';
 import 'package:variedadesjm/modules/marca/controller/marca_controller.dart';
+import 'package:variedadesjm/modules/marca/entity/marca.dart';
+import 'package:variedadesjm/modules/venta/entity/venta.dart';
+import 'package:variedadesjm/modules/venta_detalle/entity/venta_detalle.dart';
+import 'package:variedadesjm/modules/zapato/entity/zapato.dart';
 import 'package:variedadesjm/modules/zapato/controller/zapato_controller.dart';
 import 'package:variedadesjm/shared/data/app_data_provider.dart';
 import 'package:variedadesjm/shared/layouts/app_layout.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/utils/format.dart';
+import 'package:variedadesjm/shared/widgets/ui/pill_selector.dart';
 
 enum _Period { semana, mes, anio }
 
@@ -45,65 +52,75 @@ class _ReportePageState extends ConsumerState<ReportePage> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final values = [
-      ref.watch(ventasProvider),
-      ref.watch(gastosProvider),
-      ref.watch(existenciasProvider),
-      ref.watch(ventaDetallesProvider),
-      ref.watch(zapatosCatalogoProvider),
-      ref.watch(marcasCatalogoProvider),
-    ];
-    final failed = values.where((v) => v.hasError);
-    final ready = values.every((v) => v.hasValue);
+    final ventas = ref.watch(ventasProvider);
+    final gastos = ref.watch(gastosProvider);
+    final stock = ref.watch(existenciasProvider);
+    final details = ref.watch(ventaDetallesProvider);
+    final models = ref.watch(zapatosCatalogoProvider);
+    final brands = ref.watch(marcasCatalogoProvider);
 
-    return AppLayout(
-      currentIndex: 4,
-      child: failed.isNotEmpty
-          ? Center(child: Text('No se pudo cargar el reporte: ${failed.first.error}'))
-          : !ready
-              ? const Center(child: CircularProgressIndicator())
-              : _content(
-                  context,
-                  scheme,
-                  ventas: ref.read(ventasProvider).requireValue,
-                  gastos: ref.read(gastosProvider).requireValue,
-                  stock: ref.read(existenciasProvider).requireValue,
-                  details: ref.read(ventaDetallesProvider).requireValue,
-                  models: ref.read(zapatosCatalogoProvider).requireValue,
-                  brands: ref.read(marcasCatalogoProvider).requireValue,
-                ),
-    );
+    final failed = [ventas, gastos, stock, details, models, brands]
+        .where((v) => v.hasError)
+        .toList();
+
+    Widget body;
+    if (failed.isNotEmpty) {
+      body = _Message('No se pudo cargar el reporte: ${failed.first.error}');
+    } else if (!(ventas.hasValue &&
+        gastos.hasValue &&
+        stock.hasValue &&
+        details.hasValue &&
+        models.hasValue &&
+        brands.hasValue)) {
+      body = const Center(child: CircularProgressIndicator());
+    } else {
+      try {
+        final data = _compute(
+          ventas: ventas.requireValue,
+          gastos: gastos.requireValue,
+          stock: stock.requireValue,
+          details: details.requireValue,
+          models: models.requireValue,
+          brands: brands.requireValue,
+        );
+        body = _content(context, scheme, data);
+      } catch (error, stack) {
+        debugPrint('Reporte: error al calcular: $error\n$stack');
+        body = _Message('No se pudo calcular el reporte: $error');
+      }
+    }
+    return AppLayout(currentIndex: 4, child: body);
   }
 
-  Widget _content(
-    BuildContext context,
-    ColorScheme scheme, {
-    required List ventas,
-    required List gastos,
-    required List stock,
-    required List details,
-    required List models,
-    required List brands,
+  /// Calcula todos los indicadores del período con datos tipados.
+  _ReportData _compute({
+    required List<Venta> ventas,
+    required List<Gasto> gastos,
+    required List<Inventario> stock,
+    required List<VentaDetalle> details,
+    required List<Zapato> models,
+    required List<Marca> brands,
   }) {
     final sales = ventas.where((v) => _inRange(v.fechaVenta)).toList();
     final saleIds = sales.map((v) => v.id).toSet();
     final expenses = gastos.where((g) => _inRange(g.fechaGasto)).toList();
     final income = sales.fold<double>(0, (sum, v) => sum + v.total);
     final outcome = expenses.fold<double>(0, (sum, g) => sum + g.monto);
-    final activeStock = stock.where((i) => i.estado.name == 'activo').length;
+    final activeStock = stock.where((i) => i.estado == EstadoZapato.activo).length;
 
     // Pares vendidos por marca dentro del período.
-    final stockById = {for (final i in stock) i.id: i};
-    final modelById = {for (final m in models) m.id: m};
-    final brandById = {for (final b in brands) b.id: b.nombreMarca as String};
+    final stockById = <String, Inventario>{for (final i in stock) i.id: i};
+    final modelById = <String, Zapato>{for (final m in models) m.id: m};
+    final brandById = <String, String>{for (final b in brands) b.id: b.nombreMarca};
     final byBrand = <String, int>{};
-    for (final d in details.where((d) => saleIds.contains(d.idVenta))) {
-      final model = modelById[stockById[d.idInventario]?.idZapato];
-      final name = brandById[model?.idMarca] ?? 'Sin marca';
+    for (final d in details) {
+      if (!saleIds.contains(d.idVenta)) continue;
+      final item = stockById[d.idInventario];
+      final model = item == null ? null : modelById[item.idZapato];
+      final name = (model == null ? null : brandById[model.idMarca]) ?? 'Sin marca';
       byBrand[name] = (byBrand[name] ?? 0) + 1;
     }
     final ranking = byBrand.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-    final top = ranking.take(5).toList();
 
     // Día con más ventas dentro del período.
     final byDay = <DateTime, double>{};
@@ -111,9 +128,25 @@ class _ReportePageState extends ConsumerState<ReportePage> {
       final day = DateTime(v.fechaVenta.year, v.fechaVenta.month, v.fechaVenta.day);
       byDay[day] = (byDay[day] ?? 0) + v.total;
     }
-    final bestDay = byDay.entries.isEmpty
+    final bestDay = byDay.isEmpty
         ? null
         : byDay.entries.reduce((a, b) => a.value >= b.value ? a : b);
+
+    return _ReportData(
+      income: income,
+      outcome: outcome,
+      activeStock: activeStock,
+      top: ranking.take(5).toList(),
+      bestDay: bestDay,
+    );
+  }
+
+  Widget _content(BuildContext context, ColorScheme scheme, _ReportData data) {
+    final top = data.top;
+    final bestDay = data.bestDay;
+    final income = data.income;
+    final outcome = data.outcome;
+    final activeStock = data.activeStock;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
@@ -122,15 +155,11 @@ class _ReportePageState extends ConsumerState<ReportePage> {
             style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: scheme.primary)),
         const Text('Revisa el rendimiento de tu negocio'),
         const SizedBox(height: 14),
-        SegmentedButton<_Period>(
-          showSelectedIcon: false,
-          segments: const [
-            ButtonSegment(value: _Period.semana, label: Text('Semana')),
-            ButtonSegment(value: _Period.mes, label: Text('Mes')),
-            ButtonSegment(value: _Period.anio, label: Text('Año')),
-          ],
-          selected: {_period},
-          onSelectionChanged: (value) => setState(() => _period = value.first),
+        PillSelector<_Period>(
+          values: _Period.values,
+          labels: const ['Semana', 'Mes', 'Año'],
+          selected: _period,
+          onChanged: (value) => setState(() => _period = value),
         ),
         const SizedBox(height: 12),
         Row(
@@ -197,6 +226,36 @@ class _ReportePageState extends ConsumerState<ReportePage> {
       ],
     );
   }
+}
+
+/// Resultado ya calculado del período seleccionado.
+class _ReportData {
+  final double income;
+  final double outcome;
+  final int activeStock;
+  final List<MapEntry<String, int>> top;
+  final MapEntry<DateTime, double>? bestDay;
+
+  const _ReportData({
+    required this.income,
+    required this.outcome,
+    required this.activeStock,
+    required this.top,
+    required this.bestDay,
+  });
+}
+
+class _Message extends StatelessWidget {
+  final String text;
+  const _Message(this.text);
+
+  @override
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(text, textAlign: TextAlign.center),
+        ),
+      );
 }
 
 class _Highlight extends StatelessWidget {

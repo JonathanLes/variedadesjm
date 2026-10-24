@@ -6,6 +6,22 @@ import 'package:variedadesjm/shared/themes/app_theme.dart';
 
 /// Punto de entrada de Variedades JM: conecta Riverpod con el tema persistente.
 void main() {
+  // En lugar de la pantalla gris, muestra qué falló para poder corregirlo.
+  ErrorWidget.builder = (details) => Material(
+        color: const Color(0xFFFFF4F2),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Center(
+            child: SingleChildScrollView(
+              child: Text(
+                'Ocurrió un error al mostrar esta pantalla:\n\n${details.exceptionAsString()}',
+                textDirection: TextDirection.ltr,
+                style: const TextStyle(color: Color(0xFF8A1F11), fontSize: 13),
+              ),
+            ),
+          ),
+        ),
+      );
   runApp(const ProviderScope(child: VariedadesJmApp()));
 }
 
