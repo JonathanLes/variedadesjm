@@ -16,6 +16,7 @@ class VentaPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(ventasProvider);
     return AppLayout(
+      showFab: false,
       currentIndex: 1,
       child: Scaffold(
         floatingActionButton: FloatingActionButton.extended(

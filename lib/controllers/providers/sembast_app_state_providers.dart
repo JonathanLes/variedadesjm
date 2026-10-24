@@ -22,7 +22,7 @@ final paletteProvider = StateNotifierProvider<PaletteNotifier, AppPalette>((
 
 /// Controla la paleta activa sin mezclar preferencias con widgets.
 class PaletteNotifier extends StateNotifier<AppPalette> {
-  PaletteNotifier(this._ref) : super(AppColors.vino) {
+  PaletteNotifier(this._ref) : super(AppColors.marino) {
     _load();
   }
 
@@ -31,7 +31,8 @@ class PaletteNotifier extends StateNotifier<AppPalette> {
 
   Future<void> _load() async {
     final preferences = await _ref.read(sharedPreferencesProvider.future);
-    final index = preferences.getInt(_key) ?? 0;
+    final index =
+        preferences.getInt(_key) ?? AppColors.all.indexOf(AppColors.marino);
     if (index >= 0 && index < AppColors.all.length)
       state = AppColors.all[index];
   }

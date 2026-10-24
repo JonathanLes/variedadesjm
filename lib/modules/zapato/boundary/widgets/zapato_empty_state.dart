@@ -32,7 +32,7 @@ class ZapatoEmptyState extends StatelessWidget {
             icon: const Icon(Icons.add),
             label: const Text('Registrar Modelo'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.racingRed,
+              backgroundColor: AppColors.brand,
               foregroundColor: AppColors.white,
             ),
           )

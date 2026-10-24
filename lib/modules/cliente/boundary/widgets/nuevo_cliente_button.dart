@@ -23,7 +23,7 @@ class NuevoClienteButton extends StatelessWidget {
       child: ElevatedButton.icon(
         onPressed: () => _openFormModal(context),
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.racingRed,
+          backgroundColor: AppColors.brand,
           foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(

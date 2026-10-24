@@ -31,7 +31,7 @@ class DrawerMenuButton extends StatelessWidget {
         ],
       ),
       child: ListTile(
-        leading: Icon(icon, color: AppColors.racingRed),
+        leading: Icon(icon, color: AppColors.brand),
         title: Text(
           title,
           style: const TextStyle(

@@ -147,7 +147,7 @@ class InventarioDetailPage extends ConsumerWidget {
               icon: const Icon(Icons.sync),
               label: const Text('Cambiar estado del par'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.racingRed,
+                backgroundColor: AppColors.brand,
                 foregroundColor: AppColors.white,
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                 shape: const StadiumBorder(),
@@ -184,10 +184,10 @@ class InventarioDetailPage extends ConsumerWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => _eliminarPar(context, ref),
-                  icon: const Icon(Icons.delete_outline, color: AppColors.racingRed),
+                  icon: const Icon(Icons.delete_outline, color: AppColors.danger),
                   label: const Text('Eliminar'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.racingRed,
+                    foregroundColor: AppColors.danger,
                     padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                   ),
                 ),

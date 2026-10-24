@@ -55,7 +55,7 @@ class ZapatoPage extends ConsumerWidget {
                       icon: const Icon(Icons.add),
                       label: const Text('Registrar Nuevo Modelo'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.racingRed,
+                        backgroundColor: AppColors.brand,
                         foregroundColor: AppColors.white,
                       ),
                     ),

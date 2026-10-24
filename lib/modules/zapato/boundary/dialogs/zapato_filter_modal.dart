@@ -95,7 +95,7 @@ class _ZapatoFilterModalState extends ConsumerState<ZapatoFilterModal> {
                   icon: const Icon(Icons.filter_alt_outlined),
                   label: const Text('Aplicar'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.racingRed,
+                    backgroundColor: AppColors.brand,
                     foregroundColor: AppColors.white,
                   ),
                 ),

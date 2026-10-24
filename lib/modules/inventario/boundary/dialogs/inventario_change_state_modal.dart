@@ -137,7 +137,7 @@ class _InventarioChangeStateModalState
                 child: ElevatedButton(
                   onPressed: _guardarEstado,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.racingRed,
+                    backgroundColor: AppColors.brand,
                     foregroundColor: AppColors.white,
                   ),
                   child: const Text('Cambiar Estado'),

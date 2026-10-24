@@ -35,16 +35,33 @@ class AppColors {
     muted: Color(0xFF6F6258),
   );
 
-  /// Catálogo ordenado usado por la configuración y los selectores.
-  static const List<AppPalette> all = [vino, acero, cobre];
+  /// Azul marino: la identidad del rediseño. Es la paleta por defecto.
+  static const AppPalette marino = AppPalette(
+    primary: Color(0xFF13315C),
+    accent: Color(0xFF3A6EA5),
+    background: Color(0xFFF4F6FA),
+    surface: Color(0xFFFFFFFF),
+    text: Color(0xFF1B2A41),
+    muted: Color(0xFF66758B),
+  );
 
-  /// Conserva compatibilidad con widgets existentes.
-  static const Color black = Color(0xFF080705);
+  /// Catálogo ordenado usado por la configuración y los selectores.
+  /// `marino` va al final para no alterar el índice de las preferencias ya guardadas.
+  static const List<AppPalette> all = [vino, acero, cobre, marino];
+
+  /// Colores semánticos compartidos por todas las paletas:
+  /// verde = ventas y ganancias, ámbar = reservas y saldos, rojo = gastos y avisos.
+  static const Color success = Color(0xFF1E9E6A);
+  static const Color warning = Color(0xFFE08A00);
+  static const Color danger = Color(0xFFC8412F);
+
+  /// Colores base que usan los widgets de módulos anteriores al rediseño.
+  /// `brand` es el azul marino de la marca; antes eran tonos vino.
+  static const Color brand = Color(0xFF13315C);
+  static const Color black = Color(0xFF1B2A41);
   static const Color white = Color(0xFFFFFFFF);
-  static const Color grey = Color(0xFF66635B);
-  static const Color graphite = Color(0xFF40434E);
-  static const Color deepCrimson = Color(0xFF702632);
-  static const Color racingRed = Color(0xFF912F40);
+  static const Color grey = Color(0xFF66758B);
+  static const Color graphite = Color(0xFF4A5A73);
 
   /// Compara texto ignorando mayúsculas, espacios y acentos.
   static String normalize(String value) {

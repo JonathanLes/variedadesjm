@@ -15,7 +15,7 @@ class ClienteCard extends StatelessWidget {
     required this.cliente,
     required this.onEdit,
     required this.onDelete,
-    this.avatarColor = AppColors.racingRed,
+    this.avatarColor = AppColors.brand,
   });
 
   @override
@@ -132,7 +132,7 @@ class ClienteCard extends StatelessWidget {
                   icon: const Icon(
                     Icons.edit_outlined,
                     size: 18,
-                    color: AppColors.racingRed,
+                    color: AppColors.brand,
                   ),
                   label: const Text(
                     'Editar',
@@ -158,7 +158,7 @@ class ClienteCard extends StatelessWidget {
                   icon: const Icon(
                     Icons.delete_outline,
                     size: 18,
-                    color: AppColors.racingRed,
+                    color: AppColors.brand,
                   ),
                   label: const Text(
                     'Eliminar',

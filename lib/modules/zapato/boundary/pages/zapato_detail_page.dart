@@ -64,15 +64,10 @@ class ZapatoDetailPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: AppColors.black,
-        leading: const BackButton(color: AppColors.white),
-        title: const Text(
-          'Detalle del Modelo',
-          style: TextStyle(color: AppColors.white),
-        ),
+        title: const Text('Detalle del modelo'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: AppColors.racingRed),
+            icon: const Icon(Icons.delete_outline, color: AppColors.danger),
             onPressed: () => _eliminarModelo(context, ref),
           ),
         ],

@@ -11,6 +11,10 @@ import '../../modules/dashboard/boundary/pages/dashboard_page.dart';
 import '../../modules/gasto/boundary/pages/gasto_page.dart';
 import '../../modules/reporte/boundary/pages/reporte_page.dart';
 import '../../modules/venta/boundary/pages/venta_page.dart';
+import '../../modules/venta/boundary/pages/venta_form_page.dart';
+import '../../modules/reserva/boundary/pages/reserva_form_page.dart';
+import '../themes/colors.dart';
+import '../widgets/ui/speed_dial_fab.dart';
 
 class AppLayout extends StatelessWidget {
   // Esta variable es la magia del layout: recibirá la vista que queramos
@@ -19,7 +23,16 @@ class AppLayout extends StatelessWidget {
 
   final int currentIndex;
 
-  const AppLayout({super.key, required this.child, this.currentIndex = 0});
+  /// Muestra el botón "+" con Nueva venta y Nueva reserva.
+  /// Las pantallas que ya traen su propio botón flotante lo desactivan.
+  final bool showFab;
+
+  const AppLayout({
+    super.key,
+    required this.child,
+    this.currentIndex = 0,
+    this.showFab = true,
+  });
 
   void _navegar(BuildContext context, int index) {
     if (index == currentIndex) return;
@@ -86,6 +99,32 @@ class AppLayout extends StatelessWidget {
       // ----------------------------------------------------------------
       // Aquí se inyecta la vista que le pasemos al layout.
       body: child,
+
+      // Un solo botón "+" que despliega las operaciones más frecuentes.
+      floatingActionButton: showFab
+          ? SpeedDialFab(
+              actions: [
+                SpeedDialAction(
+                  icon: Icons.sell_outlined,
+                  label: 'Nueva venta',
+                  color: AppColors.success,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const VentaFormPage()),
+                  ),
+                ),
+                SpeedDialAction(
+                  icon: Icons.schedule_rounded,
+                  label: 'Nueva reserva',
+                  color: AppColors.warning,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ReservaFormPage()),
+                  ),
+                ),
+              ],
+            )
+          : null,
 
       // ----------------------------------------------------------------
       //  ZONA INFERIOR (Bottom Navigation)

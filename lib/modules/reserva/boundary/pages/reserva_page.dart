@@ -17,6 +17,7 @@ class ReservaPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(reservasProvider);
     return AppLayout(
+      showFab: false,
       currentIndex: 4,
       child: Scaffold(
         floatingActionButton: FloatingActionButton.extended(
