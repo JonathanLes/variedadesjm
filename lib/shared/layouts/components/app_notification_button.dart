@@ -17,7 +17,7 @@ class AppNotificationButton extends StatelessWidget {
         IconButton(
           icon: const Icon(
             Icons.notifications_none,
-            color: Theme.of(context).colorScheme.primary,
+            //color: Theme.of(context).colorScheme.primary,
             size: 26,
           ),
           onPressed: () {
