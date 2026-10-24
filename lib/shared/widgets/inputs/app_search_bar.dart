@@ -84,37 +84,26 @@ class _AppSearchBarState extends State<AppSearchBar> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey, width: 1),
-      ),
-      child: TextField(
-        controller: _searchController,
-        onChanged: _onSearchChanged,
-        textCapitalization: widget.textCapitalization,
-        textInputAction: TextInputAction.search,
-        style: const TextStyle(fontSize: 17, color: Colors.black87),
-        decoration: InputDecoration(
-          hintText: widget.hintText,
-          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 15),
-          prefixIcon: Icon(Icons.search, color: Colors.grey.shade600, size: 22),
-          // El sufijo solo se dibuja si el controlador tiene texto escrito
-          suffixIcon: _searchController.text.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.close, size: 20),
-                  color: Colors.grey.shade600,
-                  onPressed: _clearSearch,
-                  tooltip: 'Limpiar búsqueda',
-                )
-              : null,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-        ),
+    final scheme = Theme.of(context).colorScheme;
+    return TextField(
+      controller: _searchController,
+      onChanged: _onSearchChanged,
+      textCapitalization: widget.textCapitalization,
+      textInputAction: TextInputAction.search,
+      style: const TextStyle(fontSize: 15),
+      decoration: InputDecoration(
+        hintText: widget.hintText,
+        hintStyle: TextStyle(color: scheme.onSurfaceVariant, fontSize: 14.5),
+        prefixIcon: Icon(Icons.search, color: scheme.onSurfaceVariant, size: 22),
+        // El sufijo solo se dibuja si el controlador tiene texto escrito
+        suffixIcon: _searchController.text.isNotEmpty
+            ? IconButton(
+                icon: const Icon(Icons.close, size: 20),
+                color: scheme.onSurfaceVariant,
+                onPressed: _clearSearch,
+                tooltip: 'Limpiar búsqueda',
+              )
+            : null,
       ),
     );
   }

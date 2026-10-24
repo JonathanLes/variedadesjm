@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:variedadesjm/shared/themes/colors.dart';
-import 'package:variedadesjm/shared/themes/spacing.dart';
+import 'package:variedadesjm/shared/widgets/ui/shoe_image.dart';
 
+/// Tarjeta de un modelo del catálogo: foto grande, nombre, marca y categoría.
 class ZapatoItemCard extends StatelessWidget {
   final String nombre;
   final String marca;
   final String categoria;
+  final String? imagenPath;
   final VoidCallback onTap;
 
   const ZapatoItemCard({
@@ -13,61 +14,44 @@ class ZapatoItemCard extends StatelessWidget {
     required this.nombre,
     required this.marca,
     required this.categoria,
+    this.imagenPath,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-          border: Border.all(color: AppColors.grey.withOpacity(0.2)),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            )
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.grey.withOpacity(0.1),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusSm)),
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: ShoeImage(path: imagenPath, iconSize: 40),
                 ),
-                child: const Icon(Icons.image, size: 40, color: AppColors.grey),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    nombre,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '$marca • $categoria',
-                    style: const TextStyle(color: AppColors.grey, fontSize: 11),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+              const SizedBox(height: 8),
+              Text(
+                nombre,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
               ),
-            ),
-          ],
+              const SizedBox(height: 2),
+              Text(
+                '$marca • $categoria',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: muted, fontSize: 11.5),
+              ),
+            ],
+          ),
         ),
       ),
     );

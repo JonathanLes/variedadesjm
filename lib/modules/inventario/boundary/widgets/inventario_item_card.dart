@@ -1,7 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:variedadesjm/shared/utils/format.dart';
+import 'package:variedadesjm/shared/widgets/ui/shoe_image.dart';
 import 'inventario_status_badge.dart';
 
 /// Tarjeta de un par para la cuadrícula del inventario. Toda ella es pulsable.
@@ -27,9 +26,6 @@ class InventarioItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final path = imagenPath;
-    final hasImage = path != null && File(path).existsSync();
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -42,13 +38,7 @@ class InventarioItemCard extends StatelessWidget {
               Expanded(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    width: double.infinity,
-                    color: scheme.primary.withValues(alpha: .08),
-                    child: hasImage
-                        ? Image.file(File(path), fit: BoxFit.cover)
-                        : Icon(Icons.inventory_2_outlined, color: scheme.primary, size: 34),
-                  ),
+                  child: ShoeImage(path: imagenPath, icon: Icons.inventory_2_outlined),
                 ),
               ),
               const SizedBox(height: 8),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:variedadesjm/modules/categoria_zapato/entity/categoria_zapato.dart';
 import 'package:variedadesjm/modules/categoria_zapato/controllers/categoria_zapato_controller.dart';
@@ -80,7 +81,7 @@ class _CategoriaZapatoFormBottomSheetState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensaje),
-        backgroundColor: Colors.red.shade800,
+        backgroundColor: AppColors.danger,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -106,7 +107,7 @@ class _CategoriaZapatoFormBottomSheetState
                 width: 48,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: const Color(0xFFD8DEE9),
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -117,7 +118,7 @@ class _CategoriaZapatoFormBottomSheetState
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: AppColors.black,
               ),
             ),
             const SizedBox(height: 4),
@@ -127,7 +128,7 @@ class _CategoriaZapatoFormBottomSheetState
                   : 'Ingresa los datos de la nueva categoría',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey.shade600,
+                color: AppColors.grey,
               ),
             ),
             const SizedBox(height: 20),
@@ -137,12 +138,12 @@ class _CategoriaZapatoFormBottomSheetState
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+                  color: AppColors.black,
                 ),
                 children: [
                   TextSpan(
                     text: '*',
-                    style: TextStyle(color: Colors.red),
+                    style: TextStyle(color: AppColors.danger),
                   ),
                 ],
               ),
@@ -152,20 +153,20 @@ class _CategoriaZapatoFormBottomSheetState
               controller: _nombreController,
               decoration: InputDecoration(
                 hintText: 'Ej. ZAPATOS_DE_VESTIR',
-                hintStyle: TextStyle(color: Colors.grey.shade400),
+                hintStyle: TextStyle(color: AppColors.grey),
                 filled: true,
-                fillColor: Colors.grey.shade50,
+                fillColor: Colors.white,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 14,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(color: const Color(0xFFD8DEE9)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(color: const Color(0xFFD8DEE9)),
                 ),
               ),
             ),
@@ -174,16 +175,16 @@ class _CategoriaZapatoFormBottomSheetState
               'El nombre se guardará en mayúsculas y sin espacios.',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey.shade600,
+                color: AppColors.grey,
               ),
             ),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFFDF2F2),
+                color: const Color(0xFFEAF0F8),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFF8D7DA)),
+                border: Border.all(color: const Color(0xFFCBD7E8)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,7 +216,7 @@ class _CategoriaZapatoFormBottomSheetState
                           style: TextStyle(
                             fontSize: 12,
                             height: 1.4,
-                            color: Colors.black,
+                            color: AppColors.black,
                           ),
                         ),
                       ],
@@ -235,12 +236,10 @@ class _CategoriaZapatoFormBottomSheetState
                           ? null
                           : () => Navigator.of(context).pop(),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey.shade200,
-                        foregroundColor: Colors.black87,
+                        backgroundColor: const Color(0xFFE8EEF8),
+                        foregroundColor: AppColors.black,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: const StadiumBorder(),
                       ),
                       child: const Text(
                         'Cancelar',
@@ -256,12 +255,10 @@ class _CategoriaZapatoFormBottomSheetState
                     child: ElevatedButton.icon(
                       onPressed: _isSubmitting ? null : _guardar,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFB71C1C),
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: const StadiumBorder(),
                       ),
                       icon: _isSubmitting
                           ? const SizedBox(
