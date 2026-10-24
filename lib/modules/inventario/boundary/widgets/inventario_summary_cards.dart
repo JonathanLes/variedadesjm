@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
-import 'package:variedadesjm/shared/themes/spacing.dart';
+import 'package:variedadesjm/shared/utils/format.dart';
 
+/// Tres mosaicos con el estado del stock y el valor del inventario a costo.
 class InventarioSummaryCards extends StatelessWidget {
   final int totalPares;
   final int paresActivos;
@@ -16,42 +17,19 @@ class InventarioSummaryCards extends StatelessWidget {
     required this.valorTotal,
   });
 
-  /// Construye una tarjeta individual de resumen estadístico.
-  Widget _buildCard(String title, String value, IconData icon, Color color) {
+  Widget _tile(BuildContext context, String value, String label, Color color) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.sm),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-          border: Border.all(color: AppColors.grey.withOpacity(0.2)),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: color.withOpacity(0.1),
-              child: Icon(icon, color: color, size: 20),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(fontSize: 11, color: AppColors.grey),
-                  ),
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(value,
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: color)),
+              Text(label, style: const TextStyle(fontSize: 11.5)),
+            ],
+          ),
         ),
       ),
     );
@@ -59,65 +37,28 @@ class InventarioSummaryCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-        side: BorderSide(color: AppColors.grey.withOpacity(0.2)),
-      ),
-      child: ExpansionTile(
-        initiallyExpanded: false,
-        tilePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-        childrenPadding: const EdgeInsets.fromLTRB(
-          AppSpacing.sm,
-          0,
-          AppSpacing.sm,
-          AppSpacing.sm,
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      children: [
+        Row(
+          children: [
+            _tile(context, '$totalPares', 'Registrados', scheme.primary),
+            const SizedBox(width: 8),
+            _tile(context, '$paresActivos', 'Disponibles', AppColors.success),
+            const SizedBox(width: 8),
+            _tile(context, '$paresReservados', 'Reservados', AppColors.warning),
+          ],
         ),
-        leading: const Icon(Icons.inventory_2, color: AppColors.brand),
-        title: const Text(
-          'Resumen del inventario',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        children: [
-          Row(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
+          child: Row(
             children: [
-              _buildCard(
-                'Total de Pares',
-                totalPares.toString(),
-                Icons.inventory_2,
-                AppColors.brand,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              _buildCard(
-                'Pares Activos',
-                paresActivos.toString(),
-                Icons.check_circle,
-                Colors.green,
-              ),
+              const Expanded(child: Text('Valor del inventario (a costo)')),
+              Text(money(valorTotal), style: const TextStyle(fontWeight: FontWeight.w800)),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            children: [
-              _buildCard(
-                'Reservados',
-                paresReservados.toString(),
-                Icons.watch_later,
-                Colors.orange,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              _buildCard(
-                'Valor Total',
-                '\$${valorTotal.toStringAsFixed(2)}',
-                Icons.attach_money,
-                AppColors.black,
-              ),
-            ],
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
