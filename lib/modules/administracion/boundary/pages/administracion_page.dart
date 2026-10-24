@@ -6,6 +6,8 @@ import 'package:variedadesjm/modules/categoria_zapato/controllers/categoria_zapa
 import 'package:variedadesjm/modules/cliente/boundary/pages/cliente_page.dart';
 import 'package:variedadesjm/modules/marca/boundary/pages/marca_page.dart';
 import 'package:variedadesjm/modules/marca/controller/marca_controller.dart';
+import 'package:variedadesjm/modules/proveedor/boundary/pages/proveedor_page.dart';
+import 'package:variedadesjm/modules/proveedor/controller/proveedor_controller.dart';
 import 'package:variedadesjm/modules/reserva/boundary/pages/reserva_page.dart';
 import 'package:variedadesjm/modules/reserva/controller/reserva_resumen_provider.dart';
 import 'package:variedadesjm/modules/zapato/boundary/pages/zapato_page.dart';
@@ -25,6 +27,7 @@ class AdministracionPage extends ConsumerWidget {
     final categorias = ref.watch(categoriasZapatoCatalogoProvider).valueOrNull?.length;
     final productos = ref.watch(zapatosCatalogoProvider).valueOrNull?.length;
     final clientes = ref.watch(clientesProvider).valueOrNull?.length;
+    final proveedores = ref.watch(proveedoresProvider).valueOrNull?.length;
     final activas = ref
         .watch(reservasResumenProvider)
         .valueOrNull
@@ -65,6 +68,13 @@ class AdministracionPage extends ConsumerWidget {
             subtitle: 'Clientes de Variedades JM',
             count: clientes?.toString(),
             onTap: () => _open(context, const ClientePage()),
+          ),
+          _AdminTile(
+            icon: Icons.local_shipping_outlined,
+            title: 'Proveedores',
+            subtitle: 'Proveedores de Variedades JM',
+            count: proveedores?.toString(),
+            onTap: () => _open(context, const ProveedorPage()),
           ),
           _AdminTile(
             icon: Icons.event_available_outlined,
