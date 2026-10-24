@@ -1,142 +1,257 @@
-/// Pantalla de reservas con vencimiento y estado provenientes de la base local.
+/// Lista de reservas con búsqueda, filtros rápidos y barra de abono.
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:variedadesjm/shared/data/app_data_provider.dart';
-import 'package:variedadesjm/shared/layouts/app_layout.dart';
-import 'package:variedadesjm/shared/widgets/lists/record_list_tile.dart';
-import 'package:variedadesjm/modules/reserva/entity/reserva.dart';
-import 'reserva_form_page.dart';
-import 'package:variedadesjm/controllers/providers/sembast_core_providers.dart';
-import 'package:variedadesjm/shared/data/operation_service.dart';
+import 'package:variedadesjm/modules/reserva/boundary/pages/reserva_detail_page.dart';
+import 'package:variedadesjm/modules/reserva/controller/reserva_resumen_provider.dart';
+import 'package:variedadesjm/shared/themes/colors.dart';
+import 'package:variedadesjm/shared/utils/format.dart';
 
-/// Muestra reservas pendientes y canceladas sin datos de ejemplo.
-class ReservaPage extends ConsumerWidget {
+enum _Filter { activas, porVencer, canceladas }
+
+enum _Sort { fecha, saldo, nombre }
+
+/// Muestra las reservas pendientes y canceladas sin datos de ejemplo.
+class ReservaPage extends ConsumerStatefulWidget {
   const ReservaPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(reservasProvider);
-    return AppLayout(
-      currentIndex: 4,
-      child: Scaffold(
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () async {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ReservaFormPage()),
-            );
-            ref.invalidate(reservasProvider);
-          },
-          icon: const Icon(Icons.add),
-          label: const Text('Nueva reserva'),
-        ),
-        body: state.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) =>
-              Center(child: Text('No se pudieron cargar las reservas: $error')),
-          data: (reservas) => ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              Text(
-                'Reservas',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text('${reservas.length} reservas registradas'),
-              const SizedBox(height: 18),
-              if (reservas.isEmpty)
-                const SizedBox(
-                  height: 240,
-                  child: Center(
-                    child: Text('Aún no hay reservas registradas.'),
-                  ),
-                )
-              else
-                ...reservas.map(
-                  (reserva) => RecordListTile(
-                    title: 'Reserva ${reserva.id}',
-                    subtitle:
-                        'Vence ${reserva.fechaVencimiento.day}/${reserva.fechaVencimiento.month}/${reserva.fechaVencimiento.year} · ${reserva.estado.name}',
-                    trailing: '\$ ${reserva.adelanto.toStringAsFixed(2)}',
-                    icon: Icons.bookmark_outline,
-                    color: Colors.teal,
-                    onLongPress: () =>
-                        _actions(context, ref, reserva.id, reserva.estado),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
+  ConsumerState<ReservaPage> createState() => _ReservaPageState();
+}
+
+class _ReservaPageState extends ConsumerState<ReservaPage> {
+  final _search = TextEditingController();
+  _Filter _filter = _Filter.activas;
+  _Sort _sort = _Sort.fecha;
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
   }
 
-  Future<void> _delete(BuildContext context, WidgetRef ref, String id) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Eliminar reserva'),
-        content: const Text(
-          'Se eliminará la reserva y el par volverá a estar disponible.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    final database = await ref.read(sembastDatabaseProvider.future);
-    await OperationService(database).deleteReservation(id);
-    ref.invalidate(reservasProvider);
-    ref.invalidate(existenciasProvider);
-    ref.invalidate(dashboardDataProvider);
+  List<ReservaResumen> _apply(List<ReservaResumen> all) {
+    final query = _search.text.trim().toLowerCase();
+    final list = all.where((r) {
+      final inFilter = switch (_filter) {
+        _Filter.activas => r.pendiente,
+        _Filter.porVencer => r.porVencer,
+        _Filter.canceladas => !r.pendiente,
+      };
+      final inQuery = query.isEmpty ||
+          r.clienteNombre.toLowerCase().contains(query) ||
+          r.telefono.contains(query);
+      return inFilter && inQuery;
+    }).toList();
+    switch (_sort) {
+      case _Sort.fecha:
+        list.sort((a, b) => b.reserva.fechaReserva.compareTo(a.reserva.fechaReserva));
+      case _Sort.saldo:
+        list.sort((a, b) => b.restante.compareTo(a.restante));
+      case _Sort.nombre:
+        list.sort((a, b) => a.clienteNombre.compareTo(b.clienteNombre));
+    }
+    return list;
   }
 
-  Future<void> _actions(
-    BuildContext context,
-    WidgetRef ref,
-    String id,
-    ReservaEstado status,
-  ) async {
-    final action = await showModalBottomSheet<String>(
+  Future<void> _openSort() async {
+    final selected = await showModalBottomSheet<_Sort>(
       context: context,
       builder: (context) => SafeArea(
-        child: Wrap(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            if (status == ReservaEstado.pendiente)
-              ListTile(
-                leading: const Icon(Icons.cancel_outlined),
-                title: const Text('Cancelar reserva'),
-                onTap: () => Navigator.pop(context, 'cancel'),
-              ),
-            ListTile(
-              leading: const Icon(Icons.delete_outline),
-              title: const Text('Eliminar reserva'),
-              onTap: () => Navigator.pop(context, 'delete'),
+            const Padding(
+              padding: EdgeInsets.all(8),
+              child: Text('Ordenar por',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
             ),
+            for (final entry in const {
+              _Sort.fecha: 'Fecha de reserva (más reciente)',
+              _Sort.saldo: 'Saldo restante (mayor primero)',
+              _Sort.nombre: 'Nombre del cliente (A-Z)',
+            }.entries)
+              ListTile(
+                leading: Icon(_sort == entry.key
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_unchecked),
+                title: Text(entry.value),
+                onTap: () => Navigator.pop(context, entry.key),
+              ),
           ],
         ),
       ),
     );
-    if (!context.mounted || action == null) return;
-    if (action == 'delete') {
-      await _delete(context, ref, id);
-      return;
-    }
-    final database = await ref.read(sembastDatabaseProvider.future);
-    await OperationService(database).cancelReservation(id);
-    ref
-      ..invalidate(reservasProvider)
-      ..invalidate(existenciasProvider)
-      ..invalidate(dashboardDataProvider);
+    if (selected != null) setState(() => _sort = selected);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(reservasResumenProvider);
+    return Scaffold(
+      appBar: AppBar(title: const Text('Reservas')),
+      body: state.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => Center(child: Text('No se pudieron cargar las reservas: $error')),
+        data: (all) {
+          final list = _apply(all);
+          final active = all.where((r) => r.pendiente).length;
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _search,
+                      onChanged: (_) => setState(() {}),
+                      decoration: const InputDecoration(
+                        hintText: 'Buscar nombre o teléfono',
+                        prefixIcon: Icon(Icons.search_rounded),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filled(
+                    tooltip: 'Ordenar',
+                    onPressed: _openSort,
+                    icon: const Icon(Icons.tune_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                children: [
+                  ChoiceChip(
+                    label: Text('Activas · $active'),
+                    selected: _filter == _Filter.activas,
+                    onSelected: (_) => setState(() => _filter = _Filter.activas),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Por vencer'),
+                    selected: _filter == _Filter.porVencer,
+                    onSelected: (_) => setState(() => _filter = _Filter.porVencer),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Canceladas'),
+                    selected: _filter == _Filter.canceladas,
+                    onSelected: (_) => setState(() => _filter = _Filter.canceladas),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (list.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 60),
+                  child: Center(child: Text('No hay reservas que mostrar.')),
+                )
+              else
+                for (final item in list) _ReservaCard(item: item),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ReservaCard extends StatelessWidget {
+  final ReservaResumen item;
+  const _ReservaCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final progress = item.total <= 0 ? 0.0 : (item.abonado / item.total).clamp(0.0, 1.0);
+    final image = item.imagenPath;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => ReservaDetailPage(reservaId: item.reserva.id)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        color: scheme.primary.withValues(alpha: .08),
+                        child: image != null && File(image).existsSync()
+                            ? Image.file(File(image), fit: BoxFit.cover)
+                            : Icon(Icons.inventory_2_outlined, color: scheme.primary),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(item.clienteNombre,
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+                          Text('${item.telefono}  ·  ${shortDate(item.reserva.fechaReserva)}',
+                              style: const TextStyle(fontSize: 12)),
+                          Text(
+                            item.items.map((i) => i.nombre).join(', '),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (item.porVencer)
+                      const Icon(Icons.schedule_rounded, color: AppColors.danger, size: 20),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 7,
+                    color: AppColors.warning,
+                    backgroundColor: AppColors.warning.withValues(alpha: .18),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Abonado ${money(item.abonado)} de ${money(item.total)}',
+                        style: const TextStyle(fontSize: 12.5),
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text('Restante', style: TextStyle(fontSize: 11)),
+                        Text(money(item.restante),
+                            style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.warning)),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

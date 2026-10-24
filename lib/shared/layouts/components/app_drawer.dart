@@ -34,7 +34,7 @@ class AppDrawer extends StatelessWidget {
             decoration: const BoxDecoration(
               color: AppColors.black,
               border: Border(
-                bottom: BorderSide(color: AppColors.racingRed, width: 4.0),
+                bottom: BorderSide(color: AppColors.brand, width: 4.0),
               ),
             ),
             child: Column(
@@ -142,7 +142,7 @@ class AppDrawer extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
               child: ListTile(
-                leading: const Icon(Icons.logout, color: AppColors.racingRed),
+                leading: const Icon(Icons.logout, color: AppColors.danger),
                 title: const Text(
                   'Cerrar sesión',
                   style: TextStyle(fontWeight: FontWeight.w600),

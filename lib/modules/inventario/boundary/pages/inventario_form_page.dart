@@ -290,7 +290,7 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
                 child: ElevatedButton(
                   onPressed: _guardando ? null : _guardarInventario,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.racingRed,
+                    backgroundColor: AppColors.brand,
                     foregroundColor: AppColors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),

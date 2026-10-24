@@ -127,7 +127,7 @@ class _ClienteFormBottomSheetState extends ConsumerState<ClienteFormBottomSheet>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString()),
-            backgroundColor: AppColors.racingRed,
+            backgroundColor: AppColors.brand,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -261,7 +261,7 @@ class _ClienteFormBottomSheetState extends ConsumerState<ClienteFormBottomSheet>
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _guardarCliente,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.racingRed,
+                          backgroundColor: AppColors.brand,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),

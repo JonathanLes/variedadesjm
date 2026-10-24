@@ -75,7 +75,7 @@ class InventarioSummaryCards extends StatelessWidget {
           AppSpacing.sm,
           AppSpacing.sm,
         ),
-        leading: const Icon(Icons.inventory_2, color: AppColors.racingRed),
+        leading: const Icon(Icons.inventory_2, color: AppColors.brand),
         title: const Text(
           'Resumen del inventario',
           style: TextStyle(fontWeight: FontWeight.w600),
@@ -87,7 +87,7 @@ class InventarioSummaryCards extends StatelessWidget {
                 'Total de Pares',
                 totalPares.toString(),
                 Icons.inventory_2,
-                AppColors.racingRed,
+                AppColors.brand,
               ),
               const SizedBox(width: AppSpacing.sm),
               _buildCard(

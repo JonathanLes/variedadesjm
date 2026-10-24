@@ -81,7 +81,7 @@ class AppSortFilter extends StatelessWidget {
               Icon(
                 Icons.arrow_downward,
                 color: currentSort == SortDirection.asc 
-                    ? AppColors.racingRed 
+                    ? AppColors.brand 
                     : AppColors.graphite,
                 size: 20,
               ),
@@ -90,7 +90,7 @@ class AppSortFilter extends StatelessWidget {
                 'De la A a la Z',
                 style: TextStyle(
                   color: currentSort == SortDirection.asc 
-                      ? AppColors.racingRed 
+                      ? AppColors.brand 
                       : AppColors.graphite,
                   fontWeight: currentSort == SortDirection.asc 
                       ? FontWeight.bold 
@@ -108,7 +108,7 @@ class AppSortFilter extends StatelessWidget {
               Icon(
                 Icons.arrow_upward,
                 color: currentSort == SortDirection.desc 
-                    ? AppColors.racingRed 
+                    ? AppColors.brand 
                     : AppColors.graphite,
                 size: 20,
               ),
@@ -117,7 +117,7 @@ class AppSortFilter extends StatelessWidget {
                 'De la Z a la A',
                 style: TextStyle(
                   color: currentSort == SortDirection.desc 
-                      ? AppColors.racingRed 
+                      ? AppColors.brand 
                       : AppColors.graphite,
                   fontWeight: currentSort == SortDirection.desc 
                       ? FontWeight.bold 

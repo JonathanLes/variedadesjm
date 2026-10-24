@@ -91,14 +91,7 @@ class _ZapatoFormPageState extends ConsumerState<ZapatoFormPage> {
 
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: AppBar(
-        backgroundColor: AppColors.black,
-        leading: const BackButton(color: AppColors.white),
-        title: const Text(
-          'Registrar Modelo',
-          style: TextStyle(color: AppColors.white),
-        ),
-      ),
+      appBar: AppBar(title: const Text('Registrar modelo')),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -219,7 +212,7 @@ class _ZapatoFormPageState extends ConsumerState<ZapatoFormPage> {
                 child: ElevatedButton(
                   onPressed: _guardando ? null : _guardarModelo,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.racingRed,
+                    backgroundColor: AppColors.brand,
                     foregroundColor: AppColors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),

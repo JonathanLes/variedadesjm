@@ -50,7 +50,7 @@ class ClientePage extends ConsumerWidget {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.racingRed,
+              backgroundColor: AppColors.brand,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -77,7 +77,7 @@ class ClientePage extends ConsumerWidget {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Error al eliminar cliente: $e'),
-                      backgroundColor: AppColors.racingRed,
+                      backgroundColor: AppColors.brand,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -204,7 +204,7 @@ class ClientePage extends ConsumerWidget {
                       return ClienteCard(
                         cliente: cliente,
                         avatarColor: isEven
-                            ? AppColors.racingRed
+                            ? AppColors.brand
                             : AppColors.black,
                         onEdit: () => _onEditCliente(context, cliente),
                         onDelete: () => _onDeleteCliente(context, ref, cliente),
@@ -216,7 +216,7 @@ class ClientePage extends ConsumerWidget {
                   child: Padding(
                     padding: EdgeInsets.all(32.0),
                     child: CircularProgressIndicator(
-                      color: AppColors.racingRed,
+                      color: AppColors.brand,
                     ),
                   ),
                 ),
@@ -225,7 +225,7 @@ class ClientePage extends ConsumerWidget {
                     padding: const EdgeInsets.all(16.0),
                     child: Text(
                       'Error al obtener clientes: $error',
-                      style: const TextStyle(color: AppColors.racingRed),
+                      style: const TextStyle(color: AppColors.brand),
                     ),
                   ),
                 ),

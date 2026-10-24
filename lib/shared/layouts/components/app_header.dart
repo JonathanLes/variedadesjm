@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_notification_button.dart';
 
+/// Encabezado claro de la app: menú, nombre del negocio y notificaciones.
 class AppHeader extends StatelessWidget {
   final String title;
 
@@ -8,45 +9,38 @@ class AppHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      color: Theme.of(context).colorScheme.primary,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        border: Border(
+          bottom: BorderSide(color: scheme.outlineVariant.withValues(alpha: .6)),
+        ),
+      ),
       child: Row(
         children: [
           Builder(
             builder: (context) => IconButton(
               tooltip: 'Abrir menú',
-              icon: const Icon(Icons.menu_rounded, size: 25),
+              icon: Icon(Icons.menu_rounded, size: 26, color: scheme.primary),
               onPressed: () => Scaffold.of(context).openDrawer(),
             ),
           ),
           Expanded(
             child: Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
+              'Variedades JM',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: scheme.primary,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
-          Text(
-            _today(),
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(width: 2),
           const AppNotificationButton(),
         ],
       ),
     );
-  }
-
-  String _today() {
-    final now = DateTime.now();
-    return '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}';
   }
 }

@@ -84,6 +84,7 @@ class ConfiguracionPage extends ConsumerWidget {
   }
 
   static String _nameOf(AppPalette palette) {
+    if (palette == AppColors.marino) return 'Azul marino';
     if (palette == AppColors.vino) return 'Vino y porcelana';
     if (palette == AppColors.acero) return 'Acero y arena';
     return 'Cobre y café';

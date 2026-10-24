@@ -17,6 +17,7 @@ class GastoPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(gastosProvider);
     return AppLayout(
+      showFab: false,
       currentIndex: 2,
       child: Scaffold(
         floatingActionButton: FloatingActionButton.extended(

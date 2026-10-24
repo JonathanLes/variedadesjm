@@ -17,8 +17,8 @@ class AppNotificationButton extends StatelessWidget {
         IconButton(
           icon: const Icon(
             Icons.notifications_none,
-            color: AppColors.white,
-            size: 28,
+            color: Theme.of(context).colorScheme.primary,
+            size: 26,
           ),
           onPressed: () {
             // Aquí irá la lógica cuando el usuario toque la campana
@@ -35,7 +35,7 @@ class AppNotificationButton extends StatelessWidget {
               width: 10,
               height: 10,
               decoration: const BoxDecoration(
-                color: AppColors.racingRed,
+                color: AppColors.danger,
                 shape: BoxShape.circle, 
               ),
             ),

@@ -61,8 +61,8 @@ class _AppAlphabetFilterState extends State<AppAlphabetFilter> {
   Widget build(BuildContext context) {
     // Determinamos si hay una letra activa para cambiar los colores del botón principal
     final bool hasSelection = widget.selectedLetter != null;
-    final Color borderColor = hasSelection ? AppColors.racingRed : AppColors.grey;
-    final Color textColor = hasSelection ? AppColors.racingRed : AppColors.graphite;
+    final Color borderColor = hasSelection ? AppColors.brand : AppColors.grey;
+    final Color textColor = hasSelection ? AppColors.brand : AppColors.graphite;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,7 +159,7 @@ class _AppAlphabetFilterState extends State<AppAlphabetFilter> {
                                   ? FontWeight.bold
                                   : FontWeight.normal,
                               color: widget.selectedLetter == null
-                                  ? AppColors.racingRed
+                                  ? AppColors.brand
                                   : AppColors.graphite,
                             ),
                           ),
@@ -183,12 +183,12 @@ class _AppAlphabetFilterState extends State<AppAlphabetFilter> {
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
                                 color: isSelected 
-                                    ? AppColors.racingRed 
+                                    ? AppColors.brand 
                                     : AppColors.white,
                                 borderRadius: BorderRadius.circular(6.0),
                                 border: Border.all(
                                   color: isSelected 
-                                      ? AppColors.racingRed 
+                                      ? AppColors.brand 
                                       : AppColors.grey.withOpacity(0.3),
                                 ),
                               ),

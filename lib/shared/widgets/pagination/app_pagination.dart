@@ -180,7 +180,7 @@ class _PageNumberButton extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 4.0),
         padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.racingRed : Colors.transparent,
+          color: isActive ? AppColors.brand : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Text(

@@ -32,7 +32,7 @@ class InventarioEmptyState extends StatelessWidget {
             icon: const Icon(Icons.add),
             label: const Text('Registrar Nuevo Par'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.racingRed,
+              backgroundColor: AppColors.brand,
               foregroundColor: AppColors.white,
             ),
           )
