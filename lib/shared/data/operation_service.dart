@@ -181,6 +181,100 @@ class OperationService {
     });
   }
 
+  /// Suma un abono a una reserva pendiente sin superar el precio acordado.
+  Future<void> addReservationPayment(String reservationId, double amount) async {
+    await database.transaction((transaction) async {
+      final snapshot = await _reservations
+          .record(reservationId)
+          .getSnapshot(transaction);
+      if (snapshot == null) return;
+      final reservation = Reserva.fromJson({
+        ...snapshot.value,
+        'id': snapshot.key,
+      });
+      final details = await _reservationDetails.find(
+        transaction,
+        finder: Finder(filter: Filter.equals('idReserva', reservationId)),
+      );
+      final total = details.fold<double>(
+        0,
+        (sum, d) => sum + ((d.value['precioAcordado'] as num?)?.toDouble() ?? 0),
+      );
+      final updated = reservation.adelanto + amount;
+      await _reservations
+          .record(reservationId)
+          .put(
+            transaction,
+            reservation
+                .copyWith(adelanto: total > 0 && updated > total ? total : updated)
+                .toMap(),
+          );
+    });
+  }
+
+  /// Convierte una reserva en venta: marca los pares como vendidos, crea la
+  /// venta con sus detalles y elimina la reserva.
+  Future<void> completeReservation(String reservationId) async {
+    await database.transaction((transaction) async {
+      final snapshot = await _reservations
+          .record(reservationId)
+          .getSnapshot(transaction);
+      if (snapshot == null) return;
+      final reservation = Reserva.fromJson({
+        ...snapshot.value,
+        'id': snapshot.key,
+      });
+      final details = await _reservationDetails.find(
+        transaction,
+        finder: Finder(filter: Filter.equals('idReserva', reservationId)),
+      );
+      if (details.isEmpty) {
+        throw const InventoryUnavailableException('La reserva no tiene pares.');
+      }
+      final saleId = DateTime.now().microsecondsSinceEpoch.toString();
+      var total = 0.0;
+      for (final detailSnapshot in details) {
+        final detail = ReservaDetalle.fromJson({
+          ...detailSnapshot.value,
+          'id': detailSnapshot.key,
+        });
+        total += detail.precioAcordado;
+        final inventorySnapshot = await _inventory
+            .record(detail.idInventario)
+            .getSnapshot(transaction);
+        if (inventorySnapshot != null) {
+          final item = Inventario.fromJson({
+            ...inventorySnapshot.value,
+            'id': inventorySnapshot.key,
+          });
+          await _inventory
+              .record(item.id)
+              .put(
+                transaction,
+                item.copyWith(estado: EstadoZapato.vendido).toMap(),
+              );
+        }
+        final saleDetail = VentaDetalle(
+          id: '$saleId-${detail.idInventario}',
+          idVenta: saleId,
+          idInventario: detail.idInventario,
+          precioVentaFinal: detail.precioAcordado,
+        );
+        await _saleDetails.record(saleDetail.id).put(transaction, saleDetail.toMap());
+        await _reservationDetails.record(detailSnapshot.key).delete(transaction);
+      }
+      final sale = Venta(
+        id: saleId,
+        idCliente: reservation.idCliente,
+        fechaVenta: DateTime.now(),
+        metodoPago: 'Efectivo',
+        total: total,
+      );
+      await _sales.record(sale.id).put(transaction, sale.toMap());
+      await _reservations.record(reservationId).delete(transaction);
+    });
+  }
+
   Future<void> _deleteOperation({
     required String operationId,
     required StoreRef<String, Map<String, dynamic>> operationStore,
