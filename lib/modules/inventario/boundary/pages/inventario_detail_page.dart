@@ -63,7 +63,7 @@ class InventarioDetailPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: context.cardColor,
       body: ListView(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
@@ -75,7 +75,7 @@ class InventarioDetailPage extends ConsumerWidget {
             children: [
               const AppBackButton(),
               const SizedBox(width: AppSpacing.md),
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -85,14 +85,14 @@ class InventarioDetailPage extends ConsumerWidget {
                   SizedBox(height: 4),
                   Text(
                     'Consulta la información del inventario',
-                    style: TextStyle(fontSize: 14, color: AppColors.grey),
+                    style: TextStyle(fontSize: 14, color: context.muted),
                   ),
                 ],
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
-          _buildImagen(ref),
+          _buildImagen(context, ref),
           const SizedBox(height: AppSpacing.md),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -147,7 +147,7 @@ class InventarioDetailPage extends ConsumerWidget {
               icon: const Icon(Icons.sync),
               label: const Text('Cambiar estado del par'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.brand,
+                backgroundColor: context.brand,
                 foregroundColor: AppColors.white,
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                 shape: const StadiumBorder(),
@@ -172,10 +172,10 @@ class InventarioDetailPage extends ConsumerWidget {
                       );
                     }
                   },
-                  icon: const Icon(Icons.edit, color: AppColors.graphite),
+                  icon: Icon(Icons.edit, color: context.softInk),
                   label: const Text('Editar'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.graphite,
+                    foregroundColor: context.softInk,
                     padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                   ),
                 ),
@@ -199,21 +199,21 @@ class InventarioDetailPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildImagen(WidgetRef ref) {
+  Widget _buildImagen(BuildContext context, WidgetRef ref) {
     final zapato = (ref.watch(zapatosCatalogoProvider).valueOrNull ?? const [])
         .where((item) => item.id == this.item.idZapato)
         .firstOrNull;
     final path = zapato?.imagenPath;
     return Container(
       height: 200,
-      color: AppColors.grey.withOpacity(0.1),
+      color: context.muted.withValues(alpha: 0.1),
       child: path == null
-          ? const Center(child: Icon(Icons.image, size: 100, color: AppColors.grey))
+          ? Center(child: Icon(Icons.image, size: 100, color: context.muted))
           : Image.file(
               File(path),
               fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => const Center(
-                child: Icon(Icons.broken_image, size: 100, color: AppColors.grey),
+              errorBuilder: (_, __, ___) => Center(
+                child: Icon(Icons.broken_image, size: 100, color: context.muted),
               ),
             ),
     );

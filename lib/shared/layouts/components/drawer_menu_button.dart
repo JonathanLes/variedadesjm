@@ -20,18 +20,18 @@ class DrawerMenuButton extends StatelessWidget {
       // Añadimos un pequeño margen inferior para que los botones no queden pegados si hay varios
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
         boxShadow: [
           BoxShadow(
-            color: AppColors.grey.withOpacity(0.2),
+            color: context.muted.withValues(alpha: 0.2),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: ListTile(
-        leading: Icon(icon, color: AppColors.brand),
+        leading: Icon(icon, color: context.brand),
         title: Text(
           title,
           style: const TextStyle(
@@ -39,7 +39,7 @@ class DrawerMenuButton extends StatelessWidget {
             fontSize: 16,
           ),
         ),
-        trailing: const Icon(Icons.chevron_right, color: AppColors.black),
+        trailing: Icon(Icons.chevron_right, color: context.ink),
         onTap: onTap,
       ),
     );

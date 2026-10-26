@@ -62,7 +62,7 @@ class ZapatoDetailPage extends ConsumerWidget {
         .map((item) => item.nombreCategoria)
         .firstOrNull;
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: context.cardColor,
       appBar: AppBar(
         title: const Text('Detalle del modelo'),
         actions: [
@@ -78,21 +78,21 @@ class ZapatoDetailPage extends ConsumerWidget {
           Container(
             height: 250,
             decoration: BoxDecoration(
-              color: AppColors.grey.withOpacity(0.1),
+              color: context.muted.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
             ),
             child: zapato.imagenPath == null
-                ? const Center(
-                    child: Icon(Icons.image, size: 120, color: AppColors.grey),
+                ? Center(
+                    child: Icon(Icons.image, size: 120, color: context.muted),
                   )
                 : Image.file(
                     File(zapato.imagenPath!),
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Center(
+                    errorBuilder: (_, __, ___) => Center(
                       child: Icon(
                         Icons.broken_image,
                         size: 120,
-                        color: AppColors.grey,
+                        color: context.muted,
                       ),
                     ),
                   ),
@@ -105,7 +105,7 @@ class ZapatoDetailPage extends ConsumerWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             '${marca ?? zapato.idMarca} • ${categoria ?? zapato.idCategoria}',
-            style: TextStyle(fontSize: 16, color: AppColors.grey),
+            style: TextStyle(fontSize: 16, color: context.muted),
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
@@ -122,17 +122,17 @@ class ZapatoDetailPage extends ConsumerWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             zapato.descripcion ?? 'Sin descripción registrada.',
-            style: TextStyle(color: AppColors.graphite, height: 1.5),
+            style: TextStyle(color: context.softInk, height: 1.5),
           ),
           const SizedBox(height: AppSpacing.xl),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () {},
-              icon: const Icon(Icons.edit, color: AppColors.graphite),
-              label: const Text(
+              icon: Icon(Icons.edit, color: context.softInk),
+              label: Text(
                 'Editar Modelo',
-                style: TextStyle(color: AppColors.graphite),
+                style: TextStyle(color: context.softInk),
               ),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),

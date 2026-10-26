@@ -163,10 +163,10 @@ class _ClienteFormBottomSheetState extends ConsumerState<ClienteFormBottomSheet>
                 children: [
                   Text(
                     _isEditing ? 'Actualizar Cliente' : 'Nuevo Cliente',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.black,
+                      color: context.ink,
                     ),
                   ),
                   IconButton(
@@ -243,8 +243,8 @@ class _ClienteFormBottomSheetState extends ConsumerState<ClienteFormBottomSheet>
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE8EEF8),
-                          foregroundColor: AppColors.black,
+                          backgroundColor: context.tint,
+                          foregroundColor: context.ink,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),

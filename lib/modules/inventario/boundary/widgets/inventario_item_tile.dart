@@ -30,7 +30,7 @@ class InventarioItemTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppColors.grey.withOpacity(0.2))),
+          border: Border(bottom: BorderSide(color: context.muted.withValues(alpha: 0.2))),
         ),
         child: Row(
           children: [
@@ -38,17 +38,17 @@ class InventarioItemTile extends StatelessWidget {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: AppColors.grey.withOpacity(0.1),
+                color: context.muted.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
               ),
               child: imagenPath == null
-                  ? const Icon(Icons.image_not_supported, color: AppColors.grey)
+                  ? Icon(Icons.image_not_supported, color: context.muted)
                   : Image.file(
                       File(imagenPath!),
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(
+                      errorBuilder: (_, __, ___) => Icon(
                         Icons.image_not_supported,
-                        color: AppColors.grey,
+                        color: context.muted,
                       ),
                     ),
             ),
@@ -57,7 +57,7 @@ class InventarioItemTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(sku, style: const TextStyle(fontSize: 12, color: AppColors.grey)),
+                  Text(sku, style: TextStyle(fontSize: 12, color: context.muted)),
                   Text(modelo, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                 ],
               ),
@@ -71,7 +71,7 @@ class InventarioItemTile extends StatelessWidget {
               ],
             ),
             const SizedBox(width: AppSpacing.sm),
-            const Icon(Icons.chevron_right, color: AppColors.grey),
+            Icon(Icons.chevron_right, color: context.muted),
           ],
         ),
       ),

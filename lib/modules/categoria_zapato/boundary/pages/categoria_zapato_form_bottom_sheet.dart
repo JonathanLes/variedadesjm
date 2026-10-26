@@ -107,7 +107,7 @@ class _CategoriaZapatoFormBottomSheetState
                 width: 48,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD8DEE9),
+                  color: context.line,
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -115,10 +115,10 @@ class _CategoriaZapatoFormBottomSheetState
             const SizedBox(height: 16),
             Text(
               _isEditing ? 'Actualizar categoría' : 'Nueva categoría',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: AppColors.black,
+                color: context.ink,
               ),
             ),
             const SizedBox(height: 4),
@@ -128,17 +128,17 @@ class _CategoriaZapatoFormBottomSheetState
                   : 'Ingresa los datos de la nueva categoría',
               style: TextStyle(
                 fontSize: 14,
-                color: AppColors.grey,
+                color: context.muted,
               ),
             ),
             const SizedBox(height: 20),
             RichText(
-              text: const TextSpan(
+              text: TextSpan(
                 text: 'Nombre de la categoría ',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.black,
+                  color: context.ink,
                 ),
                 children: [
                   TextSpan(
@@ -153,20 +153,20 @@ class _CategoriaZapatoFormBottomSheetState
               controller: _nombreController,
               decoration: InputDecoration(
                 hintText: 'Ej. ZAPATOS_DE_VESTIR',
-                hintStyle: TextStyle(color: AppColors.grey),
+                hintStyle: TextStyle(color: context.muted),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: context.cardColor,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 14,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: const Color(0xFFD8DEE9)),
+                  borderSide: BorderSide(color: context.line),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: const Color(0xFFD8DEE9)),
+                  borderSide: BorderSide(color: context.line),
                 ),
               ),
             ),
@@ -175,16 +175,16 @@ class _CategoriaZapatoFormBottomSheetState
               'El nombre se guardará en mayúsculas y sin espacios.',
               style: TextStyle(
                 fontSize: 12,
-                color: AppColors.grey,
+                color: context.muted,
               ),
             ),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFEAF0F8),
+                color: context.tint,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFCBD7E8)),
+                border: Border.all(color: context.line),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,7 +198,7 @@ class _CategoriaZapatoFormBottomSheetState
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
                           'Reglas del nombre',
                           style: TextStyle(
@@ -216,7 +216,7 @@ class _CategoriaZapatoFormBottomSheetState
                           style: TextStyle(
                             fontSize: 12,
                             height: 1.4,
-                            color: AppColors.black,
+                            color: context.ink,
                           ),
                         ),
                       ],
@@ -236,8 +236,8 @@ class _CategoriaZapatoFormBottomSheetState
                           ? null
                           : () => Navigator.of(context).pop(),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE8EEF8),
-                        foregroundColor: AppColors.black,
+                        backgroundColor: context.tint,
+                        foregroundColor: context.ink,
                         elevation: 0,
                         shape: const StadiumBorder(),
                       ),

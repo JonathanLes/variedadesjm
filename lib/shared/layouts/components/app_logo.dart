@@ -25,11 +25,11 @@ class AppLogo extends StatelessWidget {
         ),
         // Le agregamos el texto que lleva debajo
         const SizedBox(height: 8.0),
-        const Text(
+        Text(
           'VARIEDADES JM',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: AppColors.white, 
+            color: context.cardColor, 
             fontSize: 15,
             fontWeight: FontWeight.bold,
           ),

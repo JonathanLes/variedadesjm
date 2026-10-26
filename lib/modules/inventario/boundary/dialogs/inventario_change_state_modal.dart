@@ -116,7 +116,7 @@ class _InventarioChangeStateModalState
             title: const Text('Vendido'),
             subtitle: const Text('Finalizado'),
             value: EstadoZapato.vendido,
-            activeColor: AppColors.grey,
+            activeColor: context.muted,
             groupValue: _estadoSeleccionado,
             onChanged: (val) => setState(() => _estadoSeleccionado = val!),
           ),
@@ -126,9 +126,9 @@ class _InventarioChangeStateModalState
               Expanded(
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text(
+                  child: Text(
                     'Cancelar',
-                    style: TextStyle(color: AppColors.graphite),
+                    style: TextStyle(color: context.softInk),
                   ),
                 ),
               ),
@@ -137,7 +137,7 @@ class _InventarioChangeStateModalState
                 child: ElevatedButton(
                   onPressed: _guardarEstado,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.brand,
+                    backgroundColor: context.brand,
                     foregroundColor: AppColors.white,
                   ),
                   child: const Text('Cambiar Estado'),

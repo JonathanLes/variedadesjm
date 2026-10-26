@@ -92,3 +92,32 @@ class AppPalette {
     required this.muted,
   });
 }
+
+/// Colores que se adaptan al modo claro/oscuro activo.
+///
+/// Los widgets antiguos usaban colores fijos (`AppColors.black`, `AppColors.white`...)
+/// que en modo oscuro quedaban ilegibles. Estos atajos leen el tema vigente.
+extension AppThemeColors on BuildContext {
+  ColorScheme get _scheme => Theme.of(this).colorScheme;
+
+  /// Texto principal.
+  Color get ink => _scheme.onSurface;
+
+  /// Texto secundario, íconos discretos y sugerencias.
+  Color get muted => _scheme.onSurfaceVariant;
+
+  /// Texto intermedio (antes "graphite").
+  Color get softInk => _scheme.onSurface.withValues(alpha: .82);
+
+  /// Fondo de tarjetas, hojas y cuadros de diálogo.
+  Color get cardColor => _scheme.surface;
+
+  /// Color de marca para botones, íconos y acentos.
+  Color get brand => _scheme.primary;
+
+  /// Líneas y bordes suaves.
+  Color get line => _scheme.outlineVariant;
+
+  /// Fondo suave teñido con el color de marca.
+  Color get tint => _scheme.primary.withValues(alpha: .09);
+}

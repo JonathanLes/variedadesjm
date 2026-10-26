@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:variedadesjm/shared/themes/spacing.dart';
+import 'package:variedadesjm/shared/themes/colors.dart';
 
+/// Aviso informativo que se adapta al modo claro y oscuro.
 class InventarioInfoBanner extends StatelessWidget {
   final String text;
 
@@ -9,23 +10,18 @@ class InventarioInfoBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-        border: Border.all(color: Colors.blue.shade200),
+        color: context.tint,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.brand.withValues(alpha: .25)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(color: Colors.blue.shade900, fontSize: 13),
-            ),
-          ),
+          Icon(Icons.info_outline_rounded, color: context.brand, size: 20),
+          const SizedBox(width: 10),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 13))),
         ],
       ),
     );

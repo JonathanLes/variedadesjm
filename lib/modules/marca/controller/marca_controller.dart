@@ -135,6 +135,7 @@ class MarcaController extends AsyncNotifier<MarcaState> {
   Future<void> crearMarca(String id, String nombre) async {
     final service = await ref.read(marcaServiceProvider.future);
     final nuevaMarca = await service.crearMarca(id, nombre);
+    ref.invalidate(marcasCatalogoProvider); // los selectores ven el cambio al instante
     
     state = state.whenData((estadoActual) {
       // Agregamos la nueva marca a la lista actual
@@ -153,6 +154,7 @@ class MarcaController extends AsyncNotifier<MarcaState> {
   Future<void> actualizarMarca(String id, String nuevoNombre) async {
     final service = await ref.read(marcaServiceProvider.future);
     final marcaActualizada = await service.actualizarMarca(id, nuevoNombre);
+    ref.invalidate(marcasCatalogoProvider); // los selectores ven el cambio al instante
     
     state = state.whenData((estadoActual) {
       final nuevaLista = estadoActual.marcas.map((m) => m.id == id ? marcaActualizada : m).toList();
@@ -166,6 +168,7 @@ class MarcaController extends AsyncNotifier<MarcaState> {
   Future<void> eliminarMarca(String id) async {
     final service = await ref.read(marcaServiceProvider.future);
     await service.eliminarMarca(id);
+    ref.invalidate(marcasCatalogoProvider); // los selectores ven el cambio al instante
     
     state = state.whenData((estadoActual) {
       final nuevaLista = estadoActual.marcas.where((m) => m.id != id).toList();

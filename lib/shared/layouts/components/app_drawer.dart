@@ -1,5 +1,7 @@
 /// Menú lateral: tarjeta de marca, Administración, Configuración y salida.
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:variedadesjm/controllers/providers/sembast_app_state_providers.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../themes/colors.dart';
@@ -8,7 +10,7 @@ import 'package:variedadesjm/modules/administracion/boundary/pages/administracio
 import 'package:variedadesjm/modules/configuracion/boundary/pages/configuracion_page.dart';
 import 'package:variedadesjm/modules/finanzas/boundary/pages/finanzas_page.dart';
 
-class AppDrawer extends StatelessWidget {
+class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
 
   void _open(BuildContext context, Widget page) {
@@ -45,7 +47,7 @@ class AppDrawer extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
     return Drawer(
       backgroundColor: scheme.surface,
@@ -93,6 +95,12 @@ class AppDrawer extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 children: [
+                  _DarkModeTile(
+                    isDark: ref.watch(themeModeProvider) == ThemeMode.dark,
+                    onChanged: (dark) => ref
+                        .read(themeModeProvider.notifier)
+                        .setThemeMode(dark ? ThemeMode.dark : ThemeMode.light),
+                  ),
                   _DrawerItem(
                     icon: Icons.tune_rounded,
                     title: 'Administración',
@@ -162,6 +170,41 @@ class _DrawerItem extends StatelessWidget {
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
         subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
         trailing: const Icon(Icons.chevron_right_rounded),
+      ),
+    );
+  }
+}
+
+/// Interruptor del modo oscuro (primera opción del menú).
+class _DarkModeTile extends StatelessWidget {
+  final bool isDark;
+  final ValueChanged<bool> onChanged;
+
+  const _DarkModeTile({required this.isDark, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        onTap: () => onChanged(!isDark),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        tileColor: scheme.primary.withValues(alpha: .05),
+        leading: CircleAvatar(
+          backgroundColor: scheme.primary.withValues(alpha: .1),
+          child: Icon(
+            isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+            color: scheme.primary,
+          ),
+        ),
+        title: const Text('Modo oscuro',
+            style: TextStyle(fontWeight: FontWeight.w800)),
+        subtitle: Text(
+          isDark ? 'Activado' : 'Desactivado',
+          style: const TextStyle(fontSize: 12),
+        ),
+        trailing: Switch(value: isDark, onChanged: onChanged),
       ),
     );
   }
