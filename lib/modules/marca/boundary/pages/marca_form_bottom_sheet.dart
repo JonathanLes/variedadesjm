@@ -108,7 +108,7 @@ class _MarcaFormBottomSheetState extends ConsumerState<MarcaFormBottomSheet> {
                 width: 48,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD8DEE9),
+                  color: context.line,
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -118,10 +118,10 @@ class _MarcaFormBottomSheetState extends ConsumerState<MarcaFormBottomSheet> {
             // Título y Subtítulo
             Text(
               _isEditing ? 'Actualizar marca' : 'Nueva marca',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: AppColors.black,
+                color: context.ink,
               ),
             ),
             const SizedBox(height: 4),
@@ -131,19 +131,19 @@ class _MarcaFormBottomSheetState extends ConsumerState<MarcaFormBottomSheet> {
                   : 'Ingresa los datos de la nueva marca',
               style: TextStyle(
                 fontSize: 14,
-                color: AppColors.grey,
+                color: context.muted,
               ),
             ),
             const SizedBox(height: 20),
 
             // Campo: Nombre de la marca
             RichText(
-              text: const TextSpan(
+              text: TextSpan(
                 text: 'Nombre de la marca ',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.black,
+                  color: context.ink,
                 ),
                 children: [
                   TextSpan(
@@ -158,20 +158,20 @@ class _MarcaFormBottomSheetState extends ConsumerState<MarcaFormBottomSheet> {
               controller: _nombreController,
               decoration: InputDecoration(
                 hintText: 'Ej. NIKE',
-                hintStyle: TextStyle(color: AppColors.grey),
+                hintStyle: TextStyle(color: context.muted),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: context.cardColor,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 14,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: const Color(0xFFD8DEE9)),
+                  borderSide: BorderSide(color: context.line),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: const Color(0xFFD8DEE9)),
+                  borderSide: BorderSide(color: context.line),
                 ),
               ),
             ),
@@ -180,7 +180,7 @@ class _MarcaFormBottomSheetState extends ConsumerState<MarcaFormBottomSheet> {
               'El nombre se guardará en mayúsculas automáticamente.',
               style: TextStyle(
                 fontSize: 12,
-                color: AppColors.grey,
+                color: context.muted,
               ),
             ),
             const SizedBox(height: 16),
@@ -189,9 +189,9 @@ class _MarcaFormBottomSheetState extends ConsumerState<MarcaFormBottomSheet> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFEAF0F8), // Fondo rosado claro
+                color: context.tint, // Fondo rosado claro
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFCBD7E8)),
+                border: Border.all(color: context.line),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,7 +205,7 @@ class _MarcaFormBottomSheetState extends ConsumerState<MarcaFormBottomSheet> {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
                           'Reglas del nombre',
                           style: TextStyle(
@@ -223,7 +223,7 @@ class _MarcaFormBottomSheetState extends ConsumerState<MarcaFormBottomSheet> {
                           style: TextStyle(
                             fontSize: 12,
                             height: 1.4,
-                            color: AppColors.black,
+                            color: context.ink,
                           ),
                         ),
                       ],
@@ -245,8 +245,8 @@ class _MarcaFormBottomSheetState extends ConsumerState<MarcaFormBottomSheet> {
                           ? null
                           : () => Navigator.of(context).pop(),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE8EEF8),
-                        foregroundColor: AppColors.black,
+                        backgroundColor: context.tint,
+                        foregroundColor: context.ink,
                         elevation: 0,
                         shape: const StadiumBorder(),
                       ),

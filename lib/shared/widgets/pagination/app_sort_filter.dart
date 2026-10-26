@@ -28,10 +28,10 @@ class AppSortFilter extends StatelessWidget {
       onSelected: onSortChanged,
       // Desplaza un poco el menú hacia abajo para que no cubra el botón
       offset: const Offset(0, 45),
-      color: AppColors.white,
+      color: context.cardColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-        side: BorderSide(color: AppColors.grey.withOpacity(0.2)),
+        side: BorderSide(color: context.muted.withValues(alpha: 0.2)),
       ),
       elevation: 4,
       // Construimos el botón visible
@@ -41,32 +41,32 @@ class AppSortFilter extends StatelessWidget {
           vertical: 12.0,
         ),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.cardColor,
           borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-          border: Border.all(color: AppColors.grey.withOpacity(0.5), width: 1.0),
+          border: Border.all(color: context.muted.withValues(alpha: 0.5), width: 1.0),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min, // Se adapta al contenido
           children: [
             // Ícono representativo de ordenamiento
-            const Icon(
+            Icon(
               Icons.sort_by_alpha,
-              color: AppColors.graphite,
+              color: context.softInk,
               size: 20,
             ),
             const SizedBox(width: AppSpacing.sm),
-            const Text(
+            Text(
               'Ordenar',
               style: TextStyle(
-                color: AppColors.graphite,
+                color: context.softInk,
                 fontWeight: FontWeight.w600,
                 fontSize: 15,
               ),
             ),
             const SizedBox(width: AppSpacing.md),
-            const Icon(
+            Icon(
               Icons.keyboard_arrow_down,
-              color: AppColors.graphite,
+              color: context.softInk,
               size: 20,
             ),
           ],
@@ -81,8 +81,8 @@ class AppSortFilter extends StatelessWidget {
               Icon(
                 Icons.arrow_downward,
                 color: currentSort == SortDirection.asc 
-                    ? AppColors.brand 
-                    : AppColors.graphite,
+                    ? context.brand 
+                    : context.softInk,
                 size: 20,
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -90,8 +90,8 @@ class AppSortFilter extends StatelessWidget {
                 'De la A a la Z',
                 style: TextStyle(
                   color: currentSort == SortDirection.asc 
-                      ? AppColors.brand 
-                      : AppColors.graphite,
+                      ? context.brand 
+                      : context.softInk,
                   fontWeight: currentSort == SortDirection.asc 
                       ? FontWeight.bold 
                       : FontWeight.normal,
@@ -108,8 +108,8 @@ class AppSortFilter extends StatelessWidget {
               Icon(
                 Icons.arrow_upward,
                 color: currentSort == SortDirection.desc 
-                    ? AppColors.brand 
-                    : AppColors.graphite,
+                    ? context.brand 
+                    : context.softInk,
                 size: 20,
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -117,8 +117,8 @@ class AppSortFilter extends StatelessWidget {
                 'De la Z a la A',
                 style: TextStyle(
                   color: currentSort == SortDirection.desc 
-                      ? AppColors.brand 
-                      : AppColors.graphite,
+                      ? context.brand 
+                      : context.softInk,
                   fontWeight: currentSort == SortDirection.desc 
                       ? FontWeight.bold 
                       : FontWeight.normal,

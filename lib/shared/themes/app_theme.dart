@@ -6,7 +6,8 @@ class AppTheme {
   AppTheme._();
 
   /// Genera un tema consistente para botones, tarjetas, formularios y textos.
-  static ThemeData fromPalette(AppPalette palette, ThemeMode mode) {
+  static ThemeData fromPalette(AppPalette base, ThemeMode mode) {
+    final palette = mode == ThemeMode.dark ? _darkVariant(base) : base;
     final scheme =
         ColorScheme.fromSeed(
           seedColor: palette.primary,
@@ -156,6 +157,27 @@ class AppTheme {
         color: palette.muted.withValues(alpha: .16),
         thickness: 1,
       ),
+    );
+  }
+
+  /// Versión oscura de una paleta: fondos casi negros teñidos con el color de
+  /// marca y un tono de marca más claro para que se lea sobre fondo oscuro.
+  static AppPalette _darkVariant(AppPalette p) {
+    final hsl = HSLColor.fromColor(p.primary);
+    final primary = hsl
+        .withLightness(0.58)
+        .withSaturation(hsl.saturation.clamp(0.0, 0.6).toDouble())
+        .toColor();
+    final tintSource = HSLColor.fromColor(p.primary).withSaturation(0.35);
+    Color tinted(double lightness) =>
+        tintSource.withLightness(lightness).toColor();
+    return AppPalette(
+      primary: primary,
+      accent: HSLColor.fromColor(p.accent).withLightness(0.66).toColor(),
+      background: tinted(0.07),
+      surface: tinted(0.12),
+      text: const Color(0xFFE8ECF3),
+      muted: const Color(0xFFA7B1C2),
     );
   }
 }

@@ -61,20 +61,20 @@ class _AppAlphabetFilterState extends State<AppAlphabetFilter> {
   Widget build(BuildContext context) {
     // Determinamos si hay una letra activa para cambiar los colores del botón principal
     final bool hasSelection = widget.selectedLetter != null;
-    final Color borderColor = hasSelection ? AppColors.brand : AppColors.grey;
-    final Color textColor = hasSelection ? AppColors.brand : AppColors.graphite;
+    final Color borderColor = hasSelection ? context.brand : context.muted;
+    final Color textColor = hasSelection ? context.brand : context.softInk;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         // 1. Etiqueta superior
-        const Text(
+        Text(
           'Filtrar por letra',
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: AppColors.graphite,
+            color: context.softInk,
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -89,7 +89,7 @@ class _AppAlphabetFilterState extends State<AppAlphabetFilter> {
               vertical: 12.0,
             ),
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: context.cardColor,
               borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
               border: Border.all(color: borderColor, width: 1.5),
             ),
@@ -130,17 +130,17 @@ class _AppAlphabetFilterState extends State<AppAlphabetFilter> {
                   margin: const EdgeInsets.only(top: AppSpacing.sm),
                   padding: const EdgeInsets.all(AppSpacing.md),
                   decoration: BoxDecoration(
-                    color: AppColors.white,
+                    color: context.cardColor,
                     borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.black.withOpacity(0.05),
+                        color: context.ink.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
                     ],
                     border: Border.all(
-                      color: AppColors.grey.withOpacity(0.2),
+                      color: context.muted.withValues(alpha: 0.2),
                     ),
                   ),
                   child: Column(
@@ -159,8 +159,8 @@ class _AppAlphabetFilterState extends State<AppAlphabetFilter> {
                                   ? FontWeight.bold
                                   : FontWeight.normal,
                               color: widget.selectedLetter == null
-                                  ? AppColors.brand
-                                  : AppColors.graphite,
+                                  ? context.brand
+                                  : context.softInk,
                             ),
                           ),
                         ),
@@ -183,13 +183,13 @@ class _AppAlphabetFilterState extends State<AppAlphabetFilter> {
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
                                 color: isSelected 
-                                    ? AppColors.brand 
-                                    : AppColors.white,
+                                    ? context.brand 
+                                    : context.cardColor,
                                 borderRadius: BorderRadius.circular(6.0),
                                 border: Border.all(
                                   color: isSelected 
-                                      ? AppColors.brand 
-                                      : AppColors.grey.withOpacity(0.3),
+                                      ? context.brand 
+                                      : context.muted.withValues(alpha: 0.3),
                                 ),
                               ),
                               child: Text(
@@ -198,8 +198,8 @@ class _AppAlphabetFilterState extends State<AppAlphabetFilter> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   color: isSelected 
-                                      ? AppColors.white 
-                                      : AppColors.graphite,
+                                      ? context.cardColor 
+                                      : context.softInk,
                                 ),
                               ),
                             ),

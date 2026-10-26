@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:variedadesjm/modules/finanzas/controller/finanzas_calculator.dart';
+import 'package:variedadesjm/modules/reporte/service/pdf_export.dart';
+import 'package:variedadesjm/modules/reporte/service/reporte_pdf.dart';
 import 'package:variedadesjm/shared/data/app_data_provider.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/utils/format.dart';
@@ -28,6 +30,7 @@ class FinanzasPage extends ConsumerStatefulWidget {
 class _FinanzasPageState extends ConsumerState<FinanzasPage> {
   FinanzasPeriodo _periodo = FinanzasPeriodo.mes;
   _Vista _vista = _Vista.resultados;
+  FinanzasData? _ultima;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +64,7 @@ class _FinanzasPageState extends ConsumerState<FinanzasPage> {
           inventario: stock.requireValue,
           reservas: reservas.requireValue,
         );
+        _ultima = data;
         body = _contenido(context, data);
       } catch (error, stack) {
         debugPrint('Finanzas: error al calcular: $error\n$stack');
@@ -69,7 +73,26 @@ class _FinanzasPageState extends ConsumerState<FinanzasPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Finanzas')),
+      appBar: AppBar(
+        title: const Text('Finanzas'),
+        actions: [
+          IconButton(
+            tooltip: 'Descargar PDF',
+            icon: const Icon(Icons.picture_as_pdf_outlined),
+            onPressed: _ultima == null
+                ? null
+                : () {
+                    final data = _ultima!;
+                    exportarPdf(
+                      context,
+                      titulo: 'Reporte financiero - ${_periodo.nombre}',
+                      archivo: 'finanzas_${_periodo.name}.pdf',
+                      construir: () => construirFinanzasPdf(data, _periodo.nombre),
+                    );
+                  },
+          ),
+        ],
+      ),
       body: body,
     );
   }

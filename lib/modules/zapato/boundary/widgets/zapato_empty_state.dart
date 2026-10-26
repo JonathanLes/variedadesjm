@@ -14,17 +14,17 @@ class ZapatoEmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.style_outlined, size: 80, color: AppColors.grey.withOpacity(0.5)),
+          Icon(Icons.style_outlined, size: 80, color: context.muted.withValues(alpha: 0.5)),
           const SizedBox(height: AppSpacing.md),
-          const Text(
+          Text(
             'Catálogo vacío',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.black),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.ink),
           ),
           const SizedBox(height: AppSpacing.sm),
-          const Text(
+          Text(
             'No hay modelos de zapatos registrados. Agrega el primer modelo para empezar a gestionar tu inventario.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.grey),
+            style: TextStyle(color: context.muted),
           ),
           const SizedBox(height: AppSpacing.lg),
           ElevatedButton.icon(
@@ -32,7 +32,7 @@ class ZapatoEmptyState extends StatelessWidget {
             icon: const Icon(Icons.add),
             label: const Text('Registrar Modelo'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.brand,
+              backgroundColor: context.brand,
               foregroundColor: AppColors.white,
             ),
           )

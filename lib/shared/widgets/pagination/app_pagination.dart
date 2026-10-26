@@ -93,8 +93,8 @@ class AppPagination extends StatelessWidget {
         // 2. Texto de resumen
         Text(
           'Mostrando $startItem a $endItem de $totalItems $itemName',
-          style: const TextStyle(
-            color: AppColors.graphite,
+          style: TextStyle(
+            color: context.softInk,
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
@@ -152,7 +152,7 @@ class _NavigationButton extends StatelessWidget {
         child: Icon(
           icon,
           size: 24,
-          color: isDisabled ? AppColors.grey.withOpacity(0.4) : AppColors.black,
+          color: isDisabled ? context.muted.withValues(alpha: 0.4) : context.ink,
         ),
       ),
     );
@@ -180,13 +180,13 @@ class _PageNumberButton extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 4.0),
         padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.brand : Colors.transparent,
+          color: isActive ? context.brand : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Text(
           pageNumber.toString(),
           style: TextStyle(
-            color: isActive ? AppColors.white : AppColors.black,
+            color: isActive ? context.cardColor : context.ink,
             fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
             fontSize: 14,
           ),
@@ -202,12 +202,12 @@ class _EllipsisWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
+    return Padding(
       padding: EdgeInsets.symmetric(horizontal: 4.0),
       child: Text(
         '...',
         style: TextStyle(
-          color: AppColors.graphite,
+          color: context.softInk,
           fontWeight: FontWeight.bold,
           letterSpacing: 2.0,
         ),

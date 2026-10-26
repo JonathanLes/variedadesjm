@@ -110,6 +110,7 @@ class CategoriaZapatoController extends AsyncNotifier<CategoriaZapatoState> {
   Future<void> crearCategoria(String id, String nombre) async {
     final service = await ref.read(categoriaZapatoServiceProvider.future);
     final nuevaCategoria = await service.crearCategoria(id, nombre);
+    ref.invalidate(categoriasZapatoCatalogoProvider);
     
     state = state.whenData((estadoActual) {
       final nuevaLista = [...estadoActual.categorias, nuevaCategoria];
@@ -126,6 +127,7 @@ class CategoriaZapatoController extends AsyncNotifier<CategoriaZapatoState> {
   Future<void> actualizarCategoria(String id, String nuevoNombre) async {
     final service = await ref.read(categoriaZapatoServiceProvider.future);
     final categoriaActualizada = await service.actualizarCategoria(id, nuevoNombre);
+    ref.invalidate(categoriasZapatoCatalogoProvider);
     
     state = state.whenData((estadoActual) {
       final nuevaLista = estadoActual.categorias
@@ -141,6 +143,7 @@ class CategoriaZapatoController extends AsyncNotifier<CategoriaZapatoState> {
   Future<void> eliminarCategoria(String id) async {
     final service = await ref.read(categoriaZapatoServiceProvider.future);
     await service.eliminarCategoria(id);
+    ref.invalidate(categoriasZapatoCatalogoProvider);
     
     state = state.whenData((estadoActual) {
       final nuevaLista = estadoActual.categorias.where((c) => c.id != id).toList();

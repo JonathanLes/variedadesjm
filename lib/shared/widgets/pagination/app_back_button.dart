@@ -14,7 +14,7 @@ class AppBackButton extends StatelessWidget {
   final VoidCallback? onPressed;
 
   /// Color opcional para el ícono de la flecha. 
-  /// Si no se provee, utiliza [AppColors.graphite].
+  /// Si no se provee, utiliza [context.softInk].
   final Color? iconColor;
 
   /// Crea una instancia de [AppBackButton].
@@ -38,17 +38,17 @@ class AppBackButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(10.0),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.cardColor,
           borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
           border: Border.all(
             // ignore: deprecated_member_use
-            color: AppColors.grey.withOpacity(0.2), 
+            color: context.muted.withValues(alpha: 0.2), 
             width: 1.0,
           ),
         ),
         child: Icon(
           Icons.arrow_back_ios_new_rounded, // Una flecha moderna y limpia
-          color: iconColor ?? AppColors.graphite,
+          color: iconColor ?? context.softInk,
           size: 20,
         ),
       ),

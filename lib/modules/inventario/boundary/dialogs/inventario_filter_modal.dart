@@ -6,7 +6,9 @@ import 'package:variedadesjm/shared/themes/spacing.dart';
 // import 'package:variedadesjm/shared/widgets/app_search_bar.dart'; 
 
 import '../../controller/inventario_controller.dart';
-import '../../../zapato/controller/zapato_controller.dart';
+import 'package:variedadesjm/controllers/database/sembast_stores.dart';
+import 'package:variedadesjm/shared/data/catalog_queries.dart';
+import 'package:variedadesjm/shared/widgets/forms/paged_picker.dart';
 
 class InventarioFilterModal extends ConsumerStatefulWidget {
   const InventarioFilterModal({super.key});
@@ -76,7 +78,6 @@ class _InventarioFilterModalState extends ConsumerState<InventarioFilterModal> {
 
   @override
   Widget build(BuildContext context) {
-    final modelos = ref.watch(zapatosCatalogoProvider);
     final viewInsets = MediaQuery.viewInsetsOf(context);
     final availableHeight =
         MediaQuery.sizeOf(context).height - viewInsets.bottom - AppSpacing.md;
@@ -93,8 +94,8 @@ class _InventarioFilterModalState extends ConsumerState<InventarioFilterModal> {
           maxHeight: availableHeight.clamp(0.0, double.infinity),
         ),
         child: Container(
-          decoration: const BoxDecoration(
-            color: AppColors.white,
+          decoration: BoxDecoration(
+            color: context.cardColor,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: SingleChildScrollView(
@@ -132,24 +133,15 @@ class _InventarioFilterModalState extends ConsumerState<InventarioFilterModal> {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          const Text('Modelo de zapato', style: TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: AppSpacing.xs),
-          modelos.when(
-            loading: () => const LinearProgressIndicator(),
-            error: (error, _) => Text('No se pudieron cargar los modelos: $error'),
-            data: (items) => DropdownButtonFormField<String>(
-              initialValue: _idZapato,
-              isExpanded: true,
-              decoration: const InputDecoration(border: OutlineInputBorder()),
-              items: items
-                  .map((zapato) => DropdownMenuItem<String>(
-                        value: zapato.id,
-                        child: Text(zapato.modelo),
-                      ))
-                  .toList(),
-              onChanged: items.isEmpty ? null : (val) => setState(() => _idZapato = val),
-              hint: const Text('Todos los modelos'),
-            ),
+          PagedPickerField(
+            label: 'Modelo de zapato',
+            icon: Icons.shopping_bag_outlined,
+            hint: 'Todos los modelos',
+            clearable: true,
+            value: _idZapato,
+            fetch: catalogFetch(ref, store: SembastStores.zapato, field: 'modelo'),
+            resolve: catalogResolve(ref, store: SembastStores.zapato, field: 'modelo'),
+            onChanged: (val) => setState(() => _idZapato = val),
           ),
           const SizedBox(height: AppSpacing.lg),
           Row(
@@ -157,7 +149,7 @@ class _InventarioFilterModalState extends ConsumerState<InventarioFilterModal> {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => _limpiarFiltros(context),
-                  child: const Text('Limpiar', style: TextStyle(color: AppColors.graphite)),
+                  child: Text('Limpiar', style: TextStyle(color: context.softInk)),
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
@@ -167,7 +159,7 @@ class _InventarioFilterModalState extends ConsumerState<InventarioFilterModal> {
                   icon: const Icon(Icons.filter_alt_outlined),
                   label: const Text('Aplicar'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.brand,
+                    backgroundColor: context.brand,
                     foregroundColor: AppColors.white,
                   ),
                 ),

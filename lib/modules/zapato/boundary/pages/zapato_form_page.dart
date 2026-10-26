@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:variedadesjm/controllers/database/sembast_stores.dart';
+import 'package:variedadesjm/shared/data/catalog_queries.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
-import 'package:variedadesjm/shared/themes/spacing.dart';
 import 'package:variedadesjm/shared/utils/image_store.dart';
-
-import 'package:variedadesjm/modules/categoria_zapato/controllers/categoria_zapato_controller.dart';
-import 'package:variedadesjm/modules/categoria_zapato/entity/categoria_zapato.dart';
-import 'package:variedadesjm/modules/marca/controller/marca_controller.dart';
-import 'package:variedadesjm/modules/marca/entity/marca.dart';
+import 'package:variedadesjm/shared/widgets/forms/paged_picker.dart';
+import 'package:variedadesjm/shared/widgets/ui/shoe_image.dart';
 import '../../controller/zapato_controller.dart';
 
 class ZapatoFormPage extends ConsumerStatefulWidget {
@@ -23,7 +21,6 @@ class _ZapatoFormPageState extends ConsumerState<ZapatoFormPage> {
   final _modeloController = TextEditingController();
   final _precioController = TextEditingController();
   final _descripcionController = TextEditingController();
-  XFile? _imagenSeleccionada;
   String? _imagenGuardadaPath;
   String? _idMarca;
   String? _idCategoria;
@@ -46,19 +43,12 @@ class _ZapatoFormPageState extends ConsumerState<ZapatoFormPage> {
       // Se copia a una carpeta permanente: la ruta del picker es temporal.
       final ruta = await persistShoeImage(imagen);
       if (!mounted) return;
-      setState(() {
-        _imagenSeleccionada = XFile(ruta);
-        _imagenGuardadaPath = ruta;
-      });
+      setState(() => _imagenGuardadaPath = ruta);
     }
   }
 
   Future<void> _guardarModelo() async {
-    if (!_formKey.currentState!.validate() ||
-        _idMarca == null ||
-        _idCategoria == null) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() => _guardando = true);
     try {
@@ -87,221 +77,142 @@ class _ZapatoFormPageState extends ConsumerState<ZapatoFormPage> {
 
   String? _validarPrecio(String? value) {
     final precio = double.tryParse(value?.trim() ?? '');
-    return precio == null || precio <= 0
-        ? 'Introduce un precio mayor que cero'
-        : null;
+    return precio == null || precio <= 0 ? 'Introduce un precio mayor que cero' : null;
   }
 
   @override
   Widget build(BuildContext context) {
-    final marcas = ref.watch(marcasCatalogoProvider);
-    final categorias = ref.watch(categoriasZapatoCatalogoProvider);
-
     return Scaffold(
-      backgroundColor: AppColors.white,
       appBar: AppBar(title: const Text('Registrar modelo')),
       body: Form(
         key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: GestureDetector(
-                  onTap: _seleccionarImagen,
-                  child: Container(
-                    height: 150,
-                    width: 150,
-                    decoration: BoxDecoration(
-                      color: AppColors.grey.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                      border: Border.all(
-                        color: AppColors.grey.withOpacity(0.3),
-                      ),
-                    ),
-                    child: _imagenSeleccionada == null
-                        ? const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
+          children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: SizedBox(
+                            width: 96,
+                            height: 96,
+                            child: ShoeImage(path: _imagenGuardadaPath, iconSize: 34),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
-                                Icons.add_a_photo,
-                                size: 40,
-                                color: AppColors.grey,
-                              ),
-                              SizedBox(height: AppSpacing.sm),
-                              Text(
-                                'Añadir Imagen',
-                                style: TextStyle(color: AppColors.grey),
+                              const Text('Foto del modelo',
+                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                              const SizedBox(height: 2),
+                              Text('Ayuda a reconocer el par al vender.',
+                                  style: TextStyle(fontSize: 12.5, color: context.muted)),
+                              const SizedBox(height: 8),
+                              OutlinedButton.icon(
+                                onPressed: _seleccionarImagen,
+                                style: OutlinedButton.styleFrom(minimumSize: const Size(0, 40)),
+                                icon: const Icon(Icons.add_a_photo_outlined, size: 18),
+                                label: Text(_imagenGuardadaPath == null
+                                    ? 'Añadir foto'
+                                    : 'Cambiar foto'),
                               ),
                             ],
-                          )
-                        : FutureBuilder(
-                            future: _imagenSeleccionada!.readAsBytes(),
-                            builder: (context, snapshot) {
-                              if (!snapshot.hasData) {
-                                return const Center(
-                                  child: CircularProgressIndicator(),
-                                );
-                              }
-                              return ClipRRect(
-                                borderRadius: BorderRadius.circular(
-                                  AppSpacing.radiusMd,
-                                ),
-                                child: Image.memory(
-                                  snapshot.data!,
-                                  fit: BoxFit.cover,
-                                ),
-                              );
-                            },
                           ),
-                  ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    _etiqueta('Nombre del modelo'),
+                    TextFormField(
+                      controller: _modeloController,
+                      decoration: const InputDecoration(
+                        hintText: 'Ej. Air Force 1',
+                        prefixIcon: Icon(Icons.label_outline_rounded, size: 20),
+                      ),
+                      validator: (value) => value == null || value.trim().isEmpty
+                          ? 'Introduce el nombre del modelo'
+                          : null,
+                    ),
+                    const SizedBox(height: 14),
+                    PagedPickerField(
+                      label: 'Marca',
+                      icon: Icons.sell_outlined,
+                      value: _idMarca,
+                      requiredMessage: 'Selecciona una marca',
+                      emptyHelp: 'Aún no hay marcas. Créalas en Administración > Marcas.',
+                      fetch: catalogFetch(ref, store: SembastStores.marca, field: 'nombreMarca'),
+                      resolve:
+                          catalogResolve(ref, store: SembastStores.marca, field: 'nombreMarca'),
+                      onChanged: (id) => setState(() => _idMarca = id),
+                    ),
+                    const SizedBox(height: 14),
+                    PagedPickerField(
+                      label: 'Categoría',
+                      icon: Icons.category_outlined,
+                      value: _idCategoria,
+                      requiredMessage: 'Selecciona una categoría',
+                      emptyHelp:
+                          'Aún no hay categorías. Créalas en Administración > Categorías.',
+                      fetch: catalogFetch(
+                        ref,
+                        store: SembastStores.categoriaZapato,
+                        field: 'nombreCategoria',
+                      ),
+                      resolve: catalogResolve(
+                        ref,
+                        store: SembastStores.categoriaZapato,
+                        field: 'nombreCategoria',
+                      ),
+                      onChanged: (id) => setState(() => _idCategoria = id),
+                    ),
+                    const SizedBox(height: 14),
+                    _etiqueta('Precio de venta sugerido'),
+                    TextFormField(
+                      controller: _precioController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(hintText: '0.00', prefixText: '\$ '),
+                      validator: _validarPrecio,
+                    ),
+                    const SizedBox(height: 14),
+                    _etiqueta('Descripción (opcional)'),
+                    TextFormField(
+                      controller: _descripcionController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(hintText: 'Detalles adicionales...'),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.lg),
-              const Text(
-                'Nombre del modelo *',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              TextFormField(
-                controller: _modeloController,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Ej. Air Force 1',
-                ),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? 'Introduce el nombre del modelo'
-                    : null,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: _buildMarcaDropdown(marcas)),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(child: _buildCategoriaDropdown(categorias)),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-              const Text(
-                'Precio de venta sugerido *',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              TextFormField(
-                controller: _precioController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  prefixText: '\$ ',
-                ),
-                validator: _validarPrecio,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              const Text(
-                'Descripción',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              TextFormField(
-                controller: _descripcionController,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Detalles adicionales...',
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _guardando ? null : _guardarModelo,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.brand,
-                    foregroundColor: AppColors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: _guardando
-                      ? const CircularProgressIndicator(color: AppColors.white)
-                      : const Text('Guardar Modelo'),
-                ),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: _guardando ? null : _guardarModelo,
+              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+              icon: _guardando
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                    )
+                  : const Icon(Icons.check_rounded),
+              label: const Text('Guardar modelo'),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildMarcaDropdown(AsyncValue<List<Marca>> marcas) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Marca *', style: TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: AppSpacing.xs),
-        marcas.when(
-          loading: () => const LinearProgressIndicator(),
-          error: (error, _) => Text('No se pudieron cargar las marcas: $error'),
-          data: (state) => DropdownButtonFormField<String>(
-            initialValue: _idMarca,
-            isExpanded: true,
-            decoration: const InputDecoration(border: OutlineInputBorder()),
-            hint: const Text('Seleccionar'),
-            items: state
-                .map(
-                  (marca) => DropdownMenuItem(
-                    value: marca.id,
-                    child: Text(marca.nombreMarca),
-                  ),
-                )
-                .toList(),
-            onChanged: state.isEmpty
-                ? null
-                : (value) => setState(() => _idMarca = value),
-            validator: (value) => value == null ? 'Selecciona una marca' : null,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCategoriaDropdown(AsyncValue<List<CategoriaZapato>> categorias) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Categoría *',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        categorias.when(
-          loading: () => const LinearProgressIndicator(),
-          error: (error, _) =>
-              Text('No se pudieron cargar las categorías: $error'),
-          data: (state) => DropdownButtonFormField<String>(
-            initialValue: _idCategoria,
-            isExpanded: true,
-            decoration: const InputDecoration(border: OutlineInputBorder()),
-            hint: const Text('Seleccionar'),
-            items: state
-                .map(
-                  (categoria) => DropdownMenuItem(
-                    value: categoria.id,
-                    child: Text(categoria.nombreCategoria),
-                  ),
-                )
-                .toList(),
-            onChanged: state.isEmpty
-                ? null
-                : (value) => setState(() => _idCategoria = value),
-            validator: (value) =>
-                value == null ? 'Selecciona una categoría' : null,
-          ),
-        ),
-      ],
-    );
-  }
+  Widget _etiqueta(String texto) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Text(texto, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+      );
 }

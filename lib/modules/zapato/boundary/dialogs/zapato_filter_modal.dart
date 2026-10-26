@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:variedadesjm/modules/categoria_zapato/controllers/categoria_zapato_controller.dart';
-import 'package:variedadesjm/modules/marca/controller/marca_controller.dart';
+import 'package:variedadesjm/controllers/database/sembast_stores.dart';
 import 'package:variedadesjm/modules/zapato/controller/zapato_controller.dart';
+import 'package:variedadesjm/shared/data/catalog_queries.dart';
+import 'package:variedadesjm/shared/widgets/forms/paged_picker.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/themes/spacing.dart';
 
@@ -41,13 +42,10 @@ class _ZapatoFilterModalState extends ConsumerState<ZapatoFilterModal> {
 
   @override
   Widget build(BuildContext context) {
-    final marcas = ref.watch(marcasCatalogoProvider);
-    final categorias = ref.watch(categoriasZapatoCatalogoProvider);
-
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: const BoxDecoration(
-        color: AppColors.white,
+      decoration: BoxDecoration(
+        color: context.cardColor,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
@@ -62,21 +60,33 @@ class _ZapatoFilterModalState extends ConsumerState<ZapatoFilterModal> {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          _buildDropdown(
+          PagedPickerField(
             label: 'Marca',
+            icon: Icons.sell_outlined,
             hint: 'Todas las marcas',
+            clearable: true,
             value: _idMarca,
-            data: marcas,
-            name: (item) => item.nombreMarca,
+            fetch: catalogFetch(ref, store: SembastStores.marca, field: 'nombreMarca'),
+            resolve: catalogResolve(ref, store: SembastStores.marca, field: 'nombreMarca'),
             onChanged: (value) => setState(() => _idMarca = value),
           ),
           const SizedBox(height: AppSpacing.md),
-          _buildDropdown(
+          PagedPickerField(
             label: 'Categoría',
+            icon: Icons.category_outlined,
             hint: 'Todas las categorías',
+            clearable: true,
             value: _idCategoria,
-            data: categorias,
-            name: (item) => item.nombreCategoria,
+            fetch: catalogFetch(
+              ref,
+              store: SembastStores.categoriaZapato,
+              field: 'nombreCategoria',
+            ),
+            resolve: catalogResolve(
+              ref,
+              store: SembastStores.categoriaZapato,
+              field: 'nombreCategoria',
+            ),
             onChanged: (value) => setState(() => _idCategoria = value),
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -85,7 +95,7 @@ class _ZapatoFilterModalState extends ConsumerState<ZapatoFilterModal> {
               Expanded(
                 child: OutlinedButton(
                   onPressed: _limpiarFiltros,
-                  child: const Text('Limpiar', style: TextStyle(color: AppColors.graphite)),
+                  child: Text('Limpiar', style: TextStyle(color: context.softInk)),
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
@@ -95,7 +105,7 @@ class _ZapatoFilterModalState extends ConsumerState<ZapatoFilterModal> {
                   icon: const Icon(Icons.filter_alt_outlined),
                   label: const Text('Aplicar'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.brand,
+                    backgroundColor: context.brand,
                     foregroundColor: AppColors.white,
                   ),
                 ),
@@ -104,37 +114,6 @@ class _ZapatoFilterModalState extends ConsumerState<ZapatoFilterModal> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildDropdown<T>({
-    required String label,
-    required String hint,
-    required String? value,
-    required AsyncValue<List<T>> data,
-    required String Function(T) name,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-        const SizedBox(height: AppSpacing.xs),
-        data.when(
-          loading: () => const LinearProgressIndicator(),
-          error: (error, _) => Text('No se pudo cargar $label: $error'),
-          data: (items) => DropdownButtonFormField<String>(
-            initialValue: value,
-            isExpanded: true,
-            decoration: const InputDecoration(border: OutlineInputBorder()),
-            hint: Text(hint),
-            items: items
-                .map((item) => DropdownMenuItem<String>(value: (item as dynamic).id as String, child: Text(name(item))))
-                .toList(),
-            onChanged: items.isEmpty ? null : onChanged,
-          ),
-        ),
-      ],
     );
   }
 }
