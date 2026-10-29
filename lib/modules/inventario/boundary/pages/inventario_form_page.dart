@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:variedadesjm/controllers/database/sembast_stores.dart';
 import 'package:variedadesjm/modules/inventario/controller/inventario_controller.dart';
 import 'package:variedadesjm/modules/inventario/entity/inventario.dart';
 import 'package:variedadesjm/modules/zapato/controller/zapato_controller.dart';
 import 'package:variedadesjm/shared/data/catalog_queries.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
-import 'package:variedadesjm/shared/utils/image_store.dart';
+import 'package:variedadesjm/shared/utils/photo_picker.dart';
 import 'package:variedadesjm/shared/widgets/forms/paged_picker.dart';
 import 'package:variedadesjm/shared/widgets/ui/shoe_image.dart';
 
@@ -81,23 +80,9 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
       '${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}';
 
   Future<void> _seleccionarImagen() async {
-    try {
-      final imagen = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 85,
-      );
-      if (imagen == null || !mounted) return;
-      // Se copia a una carpeta permanente: la caché del selector la borra Android.
-      final ruta = await persistShoeImage(imagen);
-      if (!mounted) return;
-      setState(() => _imagenActualPath = ruta);
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo seleccionar la imagen: $error')),
-        );
-      }
-    }
+    final ruta = await pickShoePhoto(context);
+    if (ruta == null || !mounted) return;
+    setState(() => _imagenActualPath = ruta);
   }
 
   Future<void> _cargarDatosModelo() async {
@@ -427,7 +412,7 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
                 onPressed: _seleccionarImagen,
                 style: OutlinedButton.styleFrom(minimumSize: const Size(0, 40)),
                 icon: const Icon(Icons.add_a_photo_outlined, size: 18),
-                label: Text(_imagenActualPath == null ? 'Añadir foto' : 'Cambiar foto'),
+                label: Text(_imagenActualPath == null ? 'Tomar o añadir foto' : 'Cambiar foto'),
               ),
             ],
           ),

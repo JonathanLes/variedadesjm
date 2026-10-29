@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:variedadesjm/controllers/database/sembast_stores.dart';
 import 'package:variedadesjm/shared/data/catalog_queries.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
-import 'package:variedadesjm/shared/utils/image_store.dart';
+import 'package:variedadesjm/shared/utils/photo_picker.dart';
 import 'package:variedadesjm/shared/widgets/forms/paged_picker.dart';
 import 'package:variedadesjm/shared/widgets/ui/shoe_image.dart';
 import '../../controller/zapato_controller.dart';
@@ -35,16 +34,9 @@ class _ZapatoFormPageState extends ConsumerState<ZapatoFormPage> {
   }
 
   Future<void> _seleccionarImagen() async {
-    final imagen = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
-    if (imagen != null && mounted) {
-      // Se copia a una carpeta permanente: la ruta del picker es temporal.
-      final ruta = await persistShoeImage(imagen);
-      if (!mounted) return;
-      setState(() => _imagenGuardadaPath = ruta);
-    }
+    final ruta = await pickShoePhoto(context);
+    if (ruta == null || !mounted) return;
+    setState(() => _imagenGuardadaPath = ruta);
   }
 
   Future<void> _guardarModelo() async {
