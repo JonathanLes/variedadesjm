@@ -1,8 +1,9 @@
 /// Selector con búsqueda y carga por páginas, para catálogos que pueden crecer.
 ///
 /// Reemplaza a los `DropdownButton`, que construyen todas las opciones de una
-/// vez. Aquí solo se piden [pageSize] opciones a la vez y se cargan más al
-/// llegar al final de la lista.
+/// vez. Aquí solo se muestra una página de opciones a la vez, con botones
+/// Anterior/Siguiente: al cambiar de página se descarta la anterior, así que
+/// la memoria usada no crece aunque el catálogo tenga miles de registros.
 library;
 
 import 'dart:async';
@@ -18,13 +19,21 @@ class PickerOption {
   const PickerOption({required this.id, required this.label});
 }
 
+/// Una página de opciones y el total de coincidencias (para saber cuántas páginas hay).
+class PickerPage {
+  final List<PickerOption> items;
+  final int total;
+
+  const PickerPage({required this.items, required this.total});
+}
+
 /// Devuelve una página de opciones que coinciden con [query].
-typedef PickerFetch = Future<List<PickerOption>> Function(String query, int offset, int limit);
+typedef PickerFetch = Future<PickerPage> Function(String query, int offset, int limit);
 
 /// Devuelve la opción que corresponde a [id], o `null` si ya no existe.
 typedef PickerResolve = Future<PickerOption?> Function(String id);
 
-const _pageSize = 20;
+const _pageSize = 8;
 
 /// Campo de formulario que muestra la opción elegida y abre el selector al tocarlo.
 class PagedPickerField extends StatefulWidget {
@@ -186,47 +195,44 @@ class _PickerSheet extends StatefulWidget {
 
 class _PickerSheetState extends State<_PickerSheet> {
   final _search = TextEditingController();
-  final _scroll = ScrollController();
-  final _items = <PickerOption>[];
+  List<PickerOption> _items = const [];
   Timer? _debounce;
   String _query = '';
-  bool _loading = false;
-  bool _hasMore = true;
+  int _page = 1;
+  int _total = 0;
+  bool _loading = true;
   Object? _error;
 
   /// Descarta respuestas de búsquedas anteriores que llegan tarde.
   int _generation = 0;
 
+  int get _pages => _total == 0 ? 1 : (_total / _pageSize).ceil();
+
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(() {
-      if (_scroll.position.extentAfter < 200) _loadMore();
-    });
-    _loadMore();
+    _load();
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
     _search.dispose();
-    _scroll.dispose();
     super.dispose();
   }
 
-  Future<void> _loadMore() async {
-    if (_loading || !_hasMore) return;
-    final generation = _generation;
+  Future<void> _load() async {
+    final generation = ++_generation;
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final page = await widget.fetch(_query, _items.length, _pageSize);
+      final page = await widget.fetch(_query, (_page - 1) * _pageSize, _pageSize);
       if (!mounted || generation != _generation) return;
       setState(() {
-        _items.addAll(page);
-        _hasMore = page.length == _pageSize;
+        _items = page.items;
+        _total = page.total;
         _loading = false;
       });
     } catch (error) {
@@ -238,17 +244,18 @@ class _PickerSheetState extends State<_PickerSheet> {
     }
   }
 
+  void _goTo(int page) {
+    if (page < 1 || page > _pages || page == _page) return;
+    _page = page;
+    _load();
+  }
+
   void _onQueryChanged(String value) {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 250), () {
-      _generation++;
-      setState(() {
-        _query = value.trim();
-        _items.clear();
-        _hasMore = true;
-        _loading = false;
-      });
-      _loadMore();
+      _query = value.trim();
+      _page = 1;
+      _load();
     });
   }
 
@@ -282,6 +289,41 @@ class _PickerSheetState extends State<_PickerSheet> {
               ),
             ),
             Expanded(child: _lista(context)),
+            _pie(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _pie(BuildContext context) {
+    if (_error != null || (_total == 0 && !_loading)) return const SizedBox(height: 8);
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton(
+              tooltip: 'Página anterior',
+              onPressed: _page > 1 && !_loading ? () => _goTo(_page - 1) : null,
+              icon: const Icon(Icons.chevron_left_rounded),
+            ),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Página $_page de $_pages',
+                    style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(_total == 1 ? '1 resultado' : '$_total resultados',
+                    style: TextStyle(fontSize: 12, color: context.muted)),
+              ],
+            ),
+            IconButton(
+              tooltip: 'Página siguiente',
+              onPressed: _page < _pages && !_loading ? () => _goTo(_page + 1) : null,
+              icon: const Icon(Icons.chevron_right_rounded),
+            ),
           ],
         ),
       ),
@@ -289,10 +331,10 @@ class _PickerSheetState extends State<_PickerSheet> {
   }
 
   Widget _lista(BuildContext context) {
-    if (_error != null && _items.isEmpty) {
+    if (_error != null) {
       return Center(child: Text('No se pudo cargar: $_error'));
     }
-    if (_items.isEmpty && _loading) {
+    if (_loading && _items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
     if (_items.isEmpty) {
@@ -307,31 +349,21 @@ class _PickerSheetState extends State<_PickerSheet> {
         ),
       );
     }
-    return ListView.builder(
-      controller: _scroll,
-      itemCount: _items.length + (_hasMore ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index >= _items.length) {
-          return const Padding(
-            padding: EdgeInsets.all(16),
-            child: Center(
-              child: SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2.5),
-              ),
-            ),
+    return Opacity(
+      opacity: _loading ? .5 : 1,
+      child: ListView.builder(
+        itemCount: _items.length,
+        itemBuilder: (context, index) {
+          final option = _items[index];
+          final selected = option.id == widget.selectedId;
+          return ListTile(
+            title: Text(option.label,
+                style: TextStyle(fontWeight: selected ? FontWeight.w800 : FontWeight.w500)),
+            trailing: selected ? Icon(Icons.check_rounded, color: context.brand) : null,
+            onTap: () => Navigator.pop(context, option),
           );
-        }
-        final option = _items[index];
-        final selected = option.id == widget.selectedId;
-        return ListTile(
-          title: Text(option.label,
-              style: TextStyle(fontWeight: selected ? FontWeight.w800 : FontWeight.w500)),
-          trailing: selected ? Icon(Icons.check_rounded, color: context.brand) : null,
-          onTap: () => Navigator.pop(context, option),
-        );
-      },
+        },
+      ),
     );
   }
 }

@@ -32,11 +32,17 @@ PickerFetch catalogFetch(WidgetRef ref, {required String store, required String 
       offset: offset,
       limit: limit,
     );
-    final rows = await stringMapStoreFactory.store(store).find(database, finder: finder);
-    return [
-      for (final row in rows)
-        PickerOption(id: row.key, label: '${row.value[field] ?? ''}'),
-    ];
+    final catalogStore = stringMapStoreFactory.store(store);
+    final rows = await catalogStore.find(database, finder: finder);
+    // El total se cuenta en la base (sin cargar los registros) para calcular las páginas.
+    final total = await catalogStore.count(database, filter: finder.filter);
+    return PickerPage(
+      items: [
+        for (final row in rows)
+          PickerOption(id: row.key, label: '${row.value[field] ?? ''}'),
+      ],
+      total: total,
+    );
   };
 }
 
