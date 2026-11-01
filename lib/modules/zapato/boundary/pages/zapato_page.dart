@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:variedadesjm/shared/widgets/inputs/app_search_bar.dart';
+import 'package:variedadesjm/shared/widgets/pagination/app_pagination.dart';
 import 'package:variedadesjm/shared/widgets/ui/admin_page.dart';
 
 import '../widgets/zapato_item_card.dart';
@@ -80,7 +81,9 @@ class ZapatoPage extends ConsumerWidget {
                 icon: Icons.style_outlined,
               );
             }
-            return GridView.builder(
+            return Column(
+              children: [
+            GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -106,6 +109,17 @@ class ZapatoPage extends ConsumerWidget {
                   ),
                 );
               },
+            ),
+            const SizedBox(height: 16),
+            AppPagination(
+              currentPage: state.filtros.page,
+              totalItems: state.totalItems,
+              pageSize: state.filtros.pageSize,
+              itemName: 'modelos',
+              onPageChanged: (page) =>
+                  ref.read(zapatoControllerProvider.notifier).cambiarPagina(page),
+            ),
+              ],
             );
           },
         ),

@@ -1,10 +1,10 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
-import 'package:variedadesjm/shared/themes/spacing.dart';
-import 'package:variedadesjm/shared/widgets/pagination/app_back_button.dart';
+import 'package:variedadesjm/modules/categoria_zapato/controllers/categoria_zapato_controller.dart';
+import 'package:variedadesjm/modules/marca/controller/marca_controller.dart';
+import 'package:variedadesjm/shared/utils/format.dart';
+import 'package:variedadesjm/shared/widgets/ui/shoe_image.dart';
 
 import '../widgets/inventario_status_badge.dart';
 import '../dialogs/inventario_change_state_modal.dart';
@@ -62,160 +62,215 @@ class InventarioDetailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final modelos = ref.watch(zapatosCatalogoProvider).valueOrNull ?? const [];
+    final zapato = modelos.where((z) => z.id == item.idZapato).firstOrNull;
+    final marca = (ref.watch(marcasCatalogoProvider).valueOrNull ?? const [])
+        .where((m) => m.id == zapato?.idMarca)
+        .map((m) => m.nombreMarca)
+        .firstOrNull;
+    final categoria =
+        (ref.watch(categoriasZapatoCatalogoProvider).valueOrNull ?? const [])
+            .where((c) => c.id == zapato?.idCategoria)
+            .map((c) => c.nombreCategoria)
+            .firstOrNull;
+    final sugerido = zapato?.precioVentaSugerido ?? 0;
+    final ganancia = sugerido - item.precioCompra;
+    final subtitulo = [
+      if (marca != null) marca,
+      if (categoria != null) categoria.replaceAll('_', ' '),
+    ].join(' · ');
+
     return Scaffold(
-      backgroundColor: context.cardColor,
-      body: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.lg,
-        ),
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const AppBackButton(),
-              const SizedBox(width: AppSpacing.md),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Detalle del Par',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Consulta la información del inventario',
-                    style: TextStyle(fontSize: 14, color: context.muted),
-                  ),
-                ],
-              ),
-            ],
+      appBar: AppBar(
+        title: const Text('Detalle del par'),
+        actions: [
+          IconButton(
+            tooltip: 'Eliminar',
+            icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+            onPressed: () => _eliminarPar(context, ref),
           ),
-          const SizedBox(height: AppSpacing.lg),
-          _buildImagen(context, ref),
-          const SizedBox(height: AppSpacing.md),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                  (ref.watch(zapatosCatalogoProvider).valueOrNull ?? const [])
-                      .where((zapato) => zapato.id == item.idZapato)
-                      .map((zapato) => zapato.modelo)
-                      .firstOrNull ??
-                  item.idZapato,
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: SizedBox(
+              height: 230,
+              child: ShoeImage(
+                path: zapato?.imagenPath,
+                fit: BoxFit.contain,
+                iconSize: 80,
               ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      zapato?.modelo ?? item.idZapato,
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                    ),
+                    if (subtitulo.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(subtitulo, style: TextStyle(color: context.muted)),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
               InventarioStatusBadge(estado: EstadoInventario.values.byName(item.estado.name)),
             ],
           ),
-          const SizedBox(height: AppSpacing.md),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.qr_code),
-            title: const Text('Código (SKU)'),
-            subtitle: Text(item.codigo),
-          ),
-          ListTile(
-            leading: const Icon(Icons.straighten),
-            title: const Text('Talla / Cm'),
-            subtitle: Text('${item.talla} / ${item.cm} cm'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.monetization_on_outlined),
-            title: const Text('Precio de compra'),
-            subtitle: Text('\$ ${item.precioCompra.toStringAsFixed(2)}'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.palette_outlined),
-            title: const Text('Color'),
-            subtitle: Text(item.color ?? 'Sin color registrado'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.calendar_today_outlined),
-            title: const Text('Fecha de compra'),
-            subtitle: Text(
-              '${item.fechaCompra.day.toString().padLeft(2, '0')}/'
-              '${item.fechaCompra.month.toString().padLeft(2, '0')}/'
-              '${item.fechaCompra.year}',
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => _abrirModalCambioEstado(context),
-              icon: const Icon(Icons.sync),
-              label: const Text('Cambiar estado del par'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.brand,
-                foregroundColor: AppColors.white,
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                shape: const StadiumBorder(),
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: 16),
           Row(
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    final resultado = await Navigator.push<String>(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => InventarioFormPage(item: item),
-                      ),
-                    );
-                    if (context.mounted && resultado != null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(resultado)),
-                      );
-                    }
-                  },
-                  icon: Icon(Icons.edit, color: context.softInk),
-                  label: const Text('Editar'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: context.softInk,
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                  ),
-                ),
+              _Dato(
+                icono: Icons.sell_outlined,
+                etiqueta: 'Precio sugerido',
+                valor: money(sugerido),
+                color: context.brand,
               ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _eliminarPar(context, ref),
-                  icon: const Icon(Icons.delete_outline, color: AppColors.danger),
-                  label: const Text('Eliminar'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.danger,
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                  ),
-                ),
+              const SizedBox(width: 10),
+              _Dato(
+                icono: Icons.trending_up_rounded,
+                etiqueta: 'Ganancia estimada',
+                valor: money(ganancia),
+                color: ganancia < 0 ? AppColors.danger : AppColors.success,
               ),
             ],
+          ),
+          const SizedBox(height: 10),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Column(
+                children: [
+                  _Fila(Icons.qr_code_rounded, 'Código (SKU)', item.codigo),
+                  _Fila(Icons.straighten_rounded, 'Talla / cm', '${item.talla} / ${item.cm} cm'),
+                  _Fila(Icons.palette_outlined, 'Color',
+                      (item.color ?? '').isEmpty ? 'Sin color registrado' : item.color!),
+                  _Fila(Icons.payments_outlined, 'Precio de compra', money(item.precioCompra)),
+                  _Fila(Icons.calendar_today_outlined, 'Fecha de compra',
+                      shortDate(item.fechaCompra),
+                      ultima: true),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          ElevatedButton.icon(
+            onPressed: () => _abrirModalCambioEstado(context),
+            icon: const Icon(Icons.sync),
+            label: const Text('Cambiar estado del par'),
+            style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: () async {
+              final resultado = await Navigator.push<String>(
+                context,
+                MaterialPageRoute(builder: (_) => InventarioFormPage(item: item)),
+              );
+              if (context.mounted && resultado != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(resultado)),
+                );
+              }
+            },
+            icon: const Icon(Icons.edit_outlined),
+            label: const Text('Editar datos'),
+            style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildImagen(BuildContext context, WidgetRef ref) {
-    final zapato = (ref.watch(zapatosCatalogoProvider).valueOrNull ?? const [])
-        .where((item) => item.id == this.item.idZapato)
-        .firstOrNull;
-    final path = zapato?.imagenPath;
-    return Container(
-      height: 200,
-      color: context.muted.withValues(alpha: 0.1),
-      child: path == null
-          ? Center(child: Icon(Icons.image, size: 100, color: context.muted))
-          : Image.file(
-              File(path),
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => Center(
-                child: Icon(Icons.broken_image, size: 100, color: context.muted),
+/// Tarjeta con un dato destacado (precio sugerido, ganancia...).
+class _Dato extends StatelessWidget {
+  final IconData icono;
+  final String etiqueta;
+  final String valor;
+  final Color color;
+
+  const _Dato({
+    required this.icono,
+    required this.etiqueta,
+    required this.valor,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icono, size: 16, color: color),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(etiqueta,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 12, color: context.muted)),
+                  ),
+                ],
               ),
-            ),
+              const SizedBox(height: 4),
+              Text(valor,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: color)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Fila de información: ícono, etiqueta y valor.
+class _Fila extends StatelessWidget {
+  final IconData icono;
+  final String etiqueta;
+  final String valor;
+  final bool ultima;
+
+  const _Fila(this.icono, this.etiqueta, this.valor, {this.ultima = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        border: ultima ? null : Border(bottom: BorderSide(color: context.line)),
+      ),
+      child: Row(
+        children: [
+          Icon(icono, size: 20, color: context.brand),
+          const SizedBox(width: 12),
+          Expanded(child: Text(etiqueta, style: TextStyle(color: context.muted))),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(valor,
+                textAlign: TextAlign.end,
+                style: const TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
     );
   }
 }

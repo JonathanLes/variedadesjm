@@ -5,6 +5,7 @@
 /// reserva solo suma el abono inicial y la fecha de vencimiento.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:variedadesjm/controllers/database/sembast_stores.dart';
 import 'package:variedadesjm/controllers/providers/sembast_core_providers.dart';
 import 'package:variedadesjm/modules/cliente/boundary/pages/cliente_form_bottom_sheet.dart';
 import 'package:variedadesjm/modules/cliente/entity/cliente.dart';
@@ -12,14 +13,17 @@ import 'package:variedadesjm/modules/inventario/boundary/pages/inventario_form_p
 import 'package:variedadesjm/modules/inventario/entity/inventario.dart';
 import 'package:variedadesjm/modules/reserva/entity/reserva.dart';
 import 'package:variedadesjm/modules/reserva_detalle/entity/reserva_detalle.dart';
+import 'package:variedadesjm/modules/marca/controller/marca_controller.dart';
 import 'package:variedadesjm/modules/venta/entity/venta.dart';
 import 'package:variedadesjm/modules/venta_detalle/entity/venta_detalle.dart';
 import 'package:variedadesjm/modules/zapato/controller/zapato_controller.dart';
 import 'package:variedadesjm/modules/zapato/entity/zapato.dart';
 import 'package:variedadesjm/shared/data/app_data_provider.dart';
+import 'package:variedadesjm/shared/data/catalog_queries.dart';
 import 'package:variedadesjm/shared/data/operation_service.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/utils/format.dart';
+import 'package:variedadesjm/shared/widgets/forms/paged_picker.dart';
 
 enum OperationMode { venta, reserva }
 
@@ -45,6 +49,8 @@ class OperationFormPage extends ConsumerStatefulWidget {
 
 class _OperationFormPageState extends ConsumerState<OperationFormPage> {
   final _search = TextEditingController();
+  final _size = TextEditingController();
+  String? _brandId;
   final _price = TextEditingController();
   final _advance = TextEditingController();
   final _phone = TextEditingController();
@@ -65,6 +71,7 @@ class _OperationFormPageState extends ConsumerState<OperationFormPage> {
   @override
   void dispose() {
     _search.dispose();
+    _size.dispose();
     _price.dispose();
     _advance.dispose();
     _phone.dispose();
@@ -112,6 +119,8 @@ class _OperationFormPageState extends ConsumerState<OperationFormPage> {
       _cart.add(_CartLine(item: item, zapato: models[item.idZapato], price: price));
       _selected = null;
       _search.clear();
+      _size.clear();
+      _brandId = null;
       _price.clear();
     });
   }
@@ -280,16 +289,31 @@ class _OperationFormPageState extends ConsumerState<OperationFormPage> {
     Map<String, Zapato> models,
   ) {
     final query = _search.text.trim().toLowerCase();
+    final size = _parse(_size.text);
+    final hasFilter = query.isNotEmpty || _brandId != null || size != null;
     final inCart = _cart.map((line) => line.item.id).toSet();
-    final matches = query.isEmpty || _selected != null
+    // Nombres de marca (solo para que el texto también encuentre por marca).
+    final brandNames = {
+      for (final b in ref.watch(marcasCatalogoProvider).valueOrNull ?? const []) b.id: b.nombreMarca,
+    };
+    bool matchesText(Inventario item) {
+      if (query.isEmpty) return true;
+      final model = models[item.idZapato];
+      return item.codigo.toLowerCase().contains(query) ||
+          (model?.modelo.toLowerCase().contains(query) ?? false) ||
+          (brandNames[model?.idMarca]?.toLowerCase().contains(query) ?? false);
+    }
+
+    final matches = !hasFilter || _selected != null
         ? <Inventario>[]
         : stock
             .where((item) =>
                 item.estado == EstadoZapato.activo &&
                 !inCart.contains(item.id) &&
-                (item.codigo.toLowerCase().contains(query) ||
-                    (models[item.idZapato]?.modelo.toLowerCase().contains(query) ?? false)))
-            .take(5)
+                matchesText(item) &&
+                (_brandId == null || models[item.idZapato]?.idMarca == _brandId) &&
+                (size == null || (item.talla - size).abs() < 0.01))
+            .take(8)
             .toList();
     final client = _clientFor(clients);
 
@@ -326,7 +350,7 @@ class _OperationFormPageState extends ConsumerState<OperationFormPage> {
           controller: _search,
           onChanged: (_) => setState(() => _selected = null),
           decoration: InputDecoration(
-            hintText: 'Escribe el código o el modelo',
+            hintText: 'Código, modelo o marca',
             prefixIcon: const Icon(Icons.search_rounded),
             suffixIcon: _search.text.isEmpty
                 ? null
@@ -339,7 +363,55 @@ class _OperationFormPageState extends ConsumerState<OperationFormPage> {
                   ),
           ),
         ),
-        if (query.isNotEmpty && _selected == null && matches.isEmpty)
+        if (_selected == null) ...[
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 3,
+                child: PagedPickerField(
+                  label: 'Marca',
+                  icon: Icons.sell_outlined,
+                  hint: 'Todas',
+                  clearable: true,
+                  value: _brandId,
+                  fetch: catalogFetch(ref, store: SembastStores.marca, field: 'nombreMarca'),
+                  resolve: catalogResolve(ref, store: SembastStores.marca, field: 'nombreMarca'),
+                  onChanged: (value) => setState(() => _brandId = value),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Talla',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: _size,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      onChanged: (_) => setState(() {}),
+                      decoration: InputDecoration(
+                        hintText: 'Ej. 7.5',
+                        prefixIcon: const Icon(Icons.straighten, size: 20),
+                        suffixIcon: _size.text.isEmpty
+                            ? null
+                            : IconButton(
+                                icon: const Icon(Icons.close_rounded, size: 20),
+                                onPressed: () => setState(_size.clear),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+        if (hasFilter && _selected == null && matches.isEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Column(
@@ -351,7 +423,7 @@ class _OperationFormPageState extends ConsumerState<OperationFormPage> {
                     const SizedBox(width: 6),
                     const Expanded(
                       child: Text(
-                        'No encontramos ese código entre los pares disponibles.',
+                        'No encontramos pares disponibles con esa búsqueda.',
                         style: TextStyle(color: AppColors.danger, fontSize: 12.5),
                       ),
                     ),
