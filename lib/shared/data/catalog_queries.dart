@@ -20,14 +20,15 @@ PickerFetch catalogFetch(WidgetRef ref, {required String store, required String 
   return (query, offset, limit) async {
     final database = await ref.read(sembastDatabaseProvider.future);
     final needle = AppColors.normalize(query);
+    final filter = needle.isEmpty
+        ? null
+        : Filter.custom((snapshot) {
+            final value = snapshot.value;
+            if (value is! Map) return false;
+            return AppColors.normalize('${value[field] ?? ''}').contains(needle);
+          });
     final finder = Finder(
-      filter: needle.isEmpty
-          ? null
-          : Filter.custom((snapshot) {
-              final value = snapshot.value;
-              if (value is! Map) return false;
-              return AppColors.normalize('${value[field] ?? ''}').contains(needle);
-            }),
+      filter: filter,
       sortOrders: [SortOrder(field)],
       offset: offset,
       limit: limit,
@@ -35,7 +36,7 @@ PickerFetch catalogFetch(WidgetRef ref, {required String store, required String 
     final catalogStore = stringMapStoreFactory.store(store);
     final rows = await catalogStore.find(database, finder: finder);
     // El total se cuenta en la base (sin cargar los registros) para calcular las páginas.
-    final total = await catalogStore.count(database, filter: finder.filter);
+    final total = await catalogStore.count(database, filter: filter);
     return PickerPage(
       items: [
         for (final row in rows)
