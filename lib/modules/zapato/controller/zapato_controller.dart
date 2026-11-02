@@ -1,9 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sembast/sembast.dart';
+import 'package:variedadesjm/controllers/database/sembast_stores.dart';
 import 'package:variedadesjm/controllers/providers/sembast_core_providers.dart';
 import 'package:variedadesjm/modules/zapato/control/zapato_dao.dart';
 import 'package:variedadesjm/modules/zapato/entity/zapato.dart';
 import 'package:variedadesjm/modules/zapato/service/zapato_service.dart';
 import 'package:variedadesjm/shared/models/filter_params.dart';
+import 'package:variedadesjm/shared/utils/image_store.dart';
 import 'package:variedadesjm/modules/inventario/control/inventario_dao.dart';
 import 'package:variedadesjm/modules/marca/control/marca_dao.dart';
 import 'package:variedadesjm/modules/categoria_zapato/control/categoria_zapato_dao.dart';
@@ -181,6 +184,23 @@ class ZapatoController extends AsyncNotifier<ZapatoState> {
     await _cargarConFiltros(nuevosFiltros);
   }
 
+  /// Ruta de la foto que tiene hoy el modelo [id] (antes de cambiarla o eliminarlo).
+  Future<String?> _fotoActual(String id) async {
+    final dao = await ref.read(zapatoDaoProvider.future);
+    return (await dao.findById(id))?.imagenPath;
+  }
+
+  /// Borra el archivo de una foto que el modelo dejó de usar, siempre que ningún
+  /// otro modelo la tenga asignada.
+  Future<void> _borrarFotoSiNadieLaUsa(String? ruta) async {
+    if (ruta == null || ruta.isEmpty) return;
+    final db = await ref.read(sembastDatabaseProvider.future);
+    final usos = await stringMapStoreFactory
+        .store(SembastStores.zapato)
+        .count(db, filter: Filter.equals('imagenPath', ruta));
+    if (usos == 0) await deleteShoeImage(ruta);
+  }
+
   /// Ingresa un nuevo bloque de datos mediante el servicio orquestando la vista optimistamente.
   ///
   /// Obtiene la instancia del registro validado de forma asíncrona.
@@ -233,6 +253,7 @@ class ZapatoController extends AsyncNotifier<ZapatoState> {
     String? imagenPath,
   }) async {
     final service = await ref.read(zapatoServiceProvider.future);
+    final fotoAnterior = await _fotoActual(id);
     final zapatoAct = await service.actualizarZapato(
       id: id,
       modelo: modelo,
@@ -242,6 +263,10 @@ class ZapatoController extends AsyncNotifier<ZapatoState> {
       descripcion: descripcion,
       imagenPath: imagenPath,
     );
+
+    if (fotoAnterior != null && fotoAnterior != imagenPath) {
+      await _borrarFotoSiNadieLaUsa(fotoAnterior);
+    }
 
     state = state.whenData((estadoActual) {
       final nuevaLista = estadoActual.zapatos
@@ -260,7 +285,9 @@ class ZapatoController extends AsyncNotifier<ZapatoState> {
   /// Resta asíncronamente una unidad en el sumario principal de entidades disponibles.
   Future<void> eliminarZapato(String id) async {
     final service = await ref.read(zapatoServiceProvider.future);
+    final fotoAnterior = await _fotoActual(id);
     await service.eliminarZapato(id);
+    await _borrarFotoSiNadieLaUsa(fotoAnterior);
 
     state = state.whenData((estadoActual) {
       final nuevaLista = estadoActual.zapatos.where((z) => z.id != id).toList();

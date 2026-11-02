@@ -30,10 +30,21 @@ class ShoeImage extends StatelessWidget {
       height: double.infinity,
       child: value == null || value.isEmpty
           ? fallback
-          : Image.file(
-              File(value),
-              fit: fit,
-              errorBuilder: (_, __, ___) => fallback,
+          // El tamaño de decodificación sigue al del recuadro: una foto de 1600 px
+          // mostrada en una tarjeta pequeña no necesita ocupar toda esa memoria.
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                final ancho = constraints.maxWidth.isFinite ? constraints.maxWidth : 400.0;
+                final px = (ancho * MediaQuery.devicePixelRatioOf(context))
+                    .round()
+                    .clamp(120, 1600);
+                return Image.file(
+                  File(value),
+                  fit: fit,
+                  cacheWidth: px,
+                  errorBuilder: (_, __, ___) => fallback,
+                );
+              },
             ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:variedadesjm/controllers/database/sembast_stores.dart';
 import 'package:variedadesjm/shared/data/catalog_queries.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
+import 'package:variedadesjm/shared/utils/image_store.dart';
 import 'package:variedadesjm/shared/utils/photo_picker.dart';
 import 'package:variedadesjm/shared/widgets/forms/paged_picker.dart';
 import 'package:variedadesjm/shared/widgets/ui/shoe_image.dart';
@@ -21,12 +22,16 @@ class _ZapatoFormPageState extends ConsumerState<ZapatoFormPage> {
   final _precioController = TextEditingController();
   final _descripcionController = TextEditingController();
   String? _imagenGuardadaPath;
+  final _fotos = PhotoSession();
+  String? _fotoGuardada;
   String? _idMarca;
   String? _idCategoria;
   bool _guardando = false;
 
   @override
   void dispose() {
+    // Borra las fotos nuevas que no llegaron a guardarse.
+    _fotos.release(keep: _fotoGuardada);
     _modeloController.dispose();
     _precioController.dispose();
     _descripcionController.dispose();
@@ -35,7 +40,9 @@ class _ZapatoFormPageState extends ConsumerState<ZapatoFormPage> {
 
   Future<void> _seleccionarImagen() async {
     final ruta = await pickShoePhoto(context);
-    if (ruta == null || !mounted) return;
+    if (ruta == null) return;
+    _fotos.register(ruta);
+    if (!mounted) return;
     setState(() => _imagenGuardadaPath = ruta);
   }
 
@@ -55,6 +62,7 @@ class _ZapatoFormPageState extends ConsumerState<ZapatoFormPage> {
             descripcion: _descripcionController.text,
             imagenPath: _imagenGuardadaPath,
           );
+      _fotoGuardada = _imagenGuardadaPath;
       if (mounted) Navigator.pop(context);
     } catch (error) {
       if (mounted) {

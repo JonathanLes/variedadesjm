@@ -1,12 +1,11 @@
 /// Lista de reservas con búsqueda, filtros rápidos y barra de abono.
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:variedadesjm/modules/reserva/boundary/pages/reserva_detail_page.dart';
 import 'package:variedadesjm/modules/reserva/controller/reserva_resumen_provider.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/utils/format.dart';
+import 'package:variedadesjm/shared/widgets/ui/shoe_image.dart';
 import 'package:variedadesjm/shared/widgets/pagination/app_pagination.dart';
 
 enum _Filter { activas, porVencer, canceladas }
@@ -221,9 +220,7 @@ class _ReservaCard extends StatelessWidget {
                         width: 56,
                         height: 56,
                         color: scheme.primary.withValues(alpha: .08),
-                        child: image != null && File(image).existsSync()
-                            ? Image.file(File(image), fit: BoxFit.cover)
-                            : Icon(Icons.inventory_2_outlined, color: scheme.primary),
+                        child: ShoeImage(path: image, icon: Icons.inventory_2_outlined, iconSize: 26),
                       ),
                     ),
                     const SizedBox(width: 12),
