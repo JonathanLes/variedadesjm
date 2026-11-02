@@ -8,6 +8,7 @@ import 'package:variedadesjm/modules/backup/boundary/widgets/administration_back
 import 'package:variedadesjm/modules/backup/boundary/widgets/backup_tutorial_dialog.dart';
 import 'package:variedadesjm/modules/backup/controller/backup_providers.dart';
 import 'package:variedadesjm/modules/backup/service/backup_models.dart';
+import 'package:variedadesjm/modules/configuracion/service/photo_cleanup.dart' show formatoBytes;
 import 'package:variedadesjm/shared/themes/colors.dart';
 
 const _folderKey = 'backup_folder_uri';
@@ -252,6 +253,83 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     }
   }
 
+  Future<void> _limpiarFotos() async {
+    final carpeta = await _carpeta();
+    if (carpeta == null || !mounted) return;
+
+    setState(() {
+      _working = true;
+      _status = 'Revisando las copias y sus fotos...';
+    });
+    try {
+      final service = await ref.read(backupServiceProvider.future);
+      final reporte = await service.revisarFotosCarpeta(carpeta);
+      if (!mounted) return;
+      setState(() => _working = false);
+
+      if (reporte.sinUso.isEmpty) {
+        _aviso(
+          'Todo en orden',
+          'Las ${reporte.enUso} foto(s) de la carpeta las necesita alguna copia o tus '
+              'productos. No hay nada que borrar.',
+          Icons.check_circle_outline,
+          AppColors.success,
+        );
+        return;
+      }
+
+      final confirmar = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          icon: const Icon(Icons.delete_sweep_outlined, size: 44, color: AppColors.danger),
+          title: const Text('¿Borrar fotos sin uso?', textAlign: TextAlign.center),
+          content: Text(
+            'Se revisaron ${reporte.copias} copia(s). Hay ${reporte.sinUso.length} foto(s) '
+            '(${formatoBytes(reporte.bytesSinUso)}) que ninguna copia ni tus productos '
+            'necesitan. Las copias y las fotos que sí se usan no se tocan. '
+            'Esta acción no se puede deshacer.',
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Borrar'),
+            ),
+          ],
+        ),
+      );
+      if (confirmar != true || !mounted) return;
+
+      setState(() {
+        _working = true;
+        _status = 'Borrando fotos sin uso...';
+      });
+      final borradas = await service.borrarFotosCarpeta(reporte.sinUso);
+      if (!mounted) return;
+      setState(() => _working = false);
+      _aviso(
+        'Fotos borradas',
+        'Se borraron $borradas foto(s) y se liberaron ${formatoBytes(reporte.bytesSinUso)}.',
+        Icons.check_circle_outline,
+        AppColors.success,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _working = false);
+      _aviso(
+        'No se pudo revisar',
+        'No se borró nada. Detalle: $e',
+        Icons.error_outline,
+        Theme.of(context).colorScheme.error,
+      );
+    }
+  }
+
   Future<void> _administrar() async {
     final carpeta = await _carpeta();
     if (carpeta == null || !mounted) return;
@@ -346,6 +424,12 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             titulo: 'Administrar copias',
             detalle: 'Elimina copias antiguas para liberar espacio',
             onTap: _working ? null : _administrar,
+          ),
+          _Accion(
+            icon: Icons.cleaning_services_outlined,
+            titulo: 'Limpiar fotos de la carpeta',
+            detalle: 'Borra las fotos que ya ninguna copia necesita',
+            onTap: _working ? null : _limpiarFotos,
           ),
         ],
       ),

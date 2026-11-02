@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:variedadesjm/modules/backup/service/backup_models.dart';
 
 void main() {
+  _fotosTests();
   test('nombre de archivo y fecha hacen ida y vuelta', () {
     final fecha = DateTime(2026, 10, 29, 8, 5, 9);
     final nombre = backupFileName('Cierre de mes!', fecha);
@@ -32,5 +33,17 @@ void main() {
     expect(leido.schemaVersion, backupSchemaVersion);
     expect(leido.stores['marca']!.single['key'], 'm1');
     expect(photoBaseName('/data/user/0/app/zapato_1.jpg'), 'zapato_1.jpg');
+  });
+}
+
+void _fotosTests() {
+  test('fotosSinUso devuelve solo las fotos que nadie necesita', () {
+    final enCarpeta = [
+      'variedadesjm_foto_zapato_1.jpg',
+      'variedadesjm_foto_zapato_2.jpg',
+      'variedadesjm_copia_20261101_100000.json',
+    ];
+    expect(fotosSinUso(enCarpeta, {'zapato_1.jpg'}), ['variedadesjm_foto_zapato_2.jpg']);
+    expect(fotosSinUso(enCarpeta, {'zapato_1.jpg', 'zapato_2.jpg'}), isEmpty);
   });
 }
