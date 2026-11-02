@@ -58,6 +58,36 @@ class BackupEntry {
   String get displayName => backupDisplayName(fileName);
 }
 
+/// Una foto guardada en la carpeta de copias.
+class BackupPhotoFile {
+  const BackupPhotoFile({required this.uri, required this.name, required this.bytes});
+  final String uri;
+
+  /// Nombre completo en la carpeta (`variedadesjm_foto_<archivo>`).
+  final String name;
+  final int bytes;
+}
+
+/// Resultado de revisar las fotos de la carpeta de copias.
+class BackupPhotoReport {
+  const BackupPhotoReport({
+    required this.enUso,
+    required this.sinUso,
+    required this.bytesSinUso,
+    required this.copias,
+  });
+
+  /// Fotos que alguna copia (o la app) todavía necesita.
+  final int enUso;
+
+  /// Fotos que ninguna copia ni la app necesitan.
+  final List<BackupPhotoFile> sinUso;
+  final int bytesSinUso;
+
+  /// Cuántas copias se revisaron.
+  final int copias;
+}
+
 class BackupResult {
   const BackupResult({required this.fileName, required this.fotos});
   final String fileName;
@@ -115,6 +145,15 @@ String backupDisplayName(String fileName) {
       .replaceAll(RegExp(r'_\d{8}_\d{6}\.json$'), '');
   return name.isEmpty ? 'Copia de seguridad' : name.replaceAll('_', ' ');
 }
+
+/// Nombres (con el prefijo de la carpeta) de las fotos de [enCarpeta] que no están
+/// en [necesarias], que contiene nombres de archivo sin prefijo (`zapato_1.jpg`).
+List<String> fotosSinUso(Iterable<String> enCarpeta, Set<String> necesarias) => [
+      for (final nombre in enCarpeta)
+        if (nombre.startsWith(backupPhotoPrefix) &&
+            !necesarias.contains(nombre.substring(backupPhotoPrefix.length)))
+          nombre,
+    ];
 
 /// Nombre del archivo (sin carpetas) de una ruta de foto.
 String photoBaseName(String path) => path.split(RegExp(r'[\\/]')).last;

@@ -113,6 +113,72 @@ class BackupService {
     return 'image/jpeg';
   }
 
+  // --- Fotos sin uso en la carpeta ---
+
+  /// Revisa qué fotos de la carpeta ya no necesita ninguna copia ni la app.
+  /// No borra nada. Si alguna copia no se puede leer, falla para no arriesgar fotos.
+  Future<BackupPhotoReport> revisarFotosCarpeta(String folderUri) async {
+    final archivos = await SafUtil().list(folderUri);
+    final necesarias = <String>{};
+    var copias = 0;
+
+    // Fotos que usa la base de datos actual.
+    for (final name in _storeNames) {
+      final rows = await _store(name).find(_db);
+      for (final row in rows) {
+        final path = row.value['imagenPath'];
+        if (path is String && path.isNotEmpty) necesarias.add(photoBaseName(path));
+      }
+    }
+
+    // Fotos que nombra cada copia que sigue en la carpeta (una a la vez, para no llenar la RAM).
+    for (final file in archivos) {
+      if (!isBackupFile(file.name)) continue;
+      final payload = await downloadBackup(file.uri.toString());
+      copias++;
+      for (final rows in payload.stores.values) {
+        for (final row in rows) {
+          final value = row['value'];
+          final path = value is Map ? value['imagenPath'] : null;
+          if (path is String && path.isNotEmpty) necesarias.add(photoBaseName(path));
+        }
+      }
+    }
+
+    final porNombre = {
+      for (final f in archivos)
+        if (f.name.startsWith(backupPhotoPrefix)) f.name: f,
+    };
+    final huerfanas = fotosSinUso(porNombre.keys, necesarias).toSet();
+    final sinUso = <BackupPhotoFile>[];
+    var bytes = 0;
+    for (final nombre in huerfanas) {
+      final f = porNombre[nombre]!;
+      final int? largo = f.length;
+      final size = largo ?? 0;
+      bytes += size;
+      sinUso.add(BackupPhotoFile(uri: f.uri.toString(), name: nombre, bytes: size));
+    }
+    return BackupPhotoReport(
+      enUso: porNombre.length - sinUso.length,
+      sinUso: sinUso,
+      bytesSinUso: bytes,
+      copias: copias,
+    );
+  }
+
+  /// Borra de la carpeta las fotos indicadas; devuelve cuántas se eliminaron.
+  Future<int> borrarFotosCarpeta(List<BackupPhotoFile> fotos) async {
+    var borradas = 0;
+    for (final foto in fotos) {
+      try {
+        await SafUtil().delete(foto.uri, false);
+        borradas++;
+      } catch (_) {}
+    }
+    return borradas;
+  }
+
   // --- Listar ---
   Future<List<BackupEntry>> listBackups({required String folderUri}) async {
     try {
