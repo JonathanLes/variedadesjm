@@ -1,9 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/themes/spacing.dart';
+import 'package:variedadesjm/shared/widgets/ui/shoe_image.dart';
 import '../../controller/zapato_controller.dart';
 import '../../entity/zapato.dart';
 import '../../../marca/controller/marca_controller.dart';
@@ -75,27 +74,12 @@ class ZapatoDetailPage extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
-          Container(
-            height: 250,
-            decoration: BoxDecoration(
-              color: context.muted.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            child: SizedBox(
+              height: 250,
+              child: ShoeImage(path: zapato.imagenPath, fit: BoxFit.contain, iconSize: 90),
             ),
-            child: zapato.imagenPath == null
-                ? Center(
-                    child: Icon(Icons.image, size: 120, color: context.muted),
-                  )
-                : Image.file(
-                    File(zapato.imagenPath!),
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => Center(
-                      child: Icon(
-                        Icons.broken_image,
-                        size: 120,
-                        color: context.muted,
-                      ),
-                    ),
-                  ),
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(

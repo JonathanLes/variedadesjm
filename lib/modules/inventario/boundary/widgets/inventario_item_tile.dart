@@ -1,8 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/themes/spacing.dart';
+import 'package:variedadesjm/shared/widgets/ui/shoe_image.dart';
 import 'inventario_status_badge.dart';
 
 class InventarioItemTile extends StatelessWidget {
@@ -34,23 +33,13 @@ class InventarioItemTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: context.muted.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              child: SizedBox(
+                width: 50,
+                height: 50,
+                child: ShoeImage(path: imagenPath, iconSize: 24),
               ),
-              child: imagenPath == null
-                  ? Icon(Icons.image_not_supported, color: context.muted)
-                  : Image.file(
-                      File(imagenPath!),
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Icon(
-                        Icons.image_not_supported,
-                        color: context.muted,
-                      ),
-                    ),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(

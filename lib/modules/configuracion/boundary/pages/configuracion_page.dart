@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:variedadesjm/modules/backup/boundary/pages/backup_page.dart';
 import 'package:variedadesjm/modules/configuracion/boundary/pages/colores_page.dart';
+import 'package:variedadesjm/modules/configuracion/boundary/pages/liberar_espacio_page.dart';
 import 'package:variedadesjm/modules/configuracion/boundary/pages/politicas_privacidad_page.dart';
 
 class ConfiguracionPage extends StatelessWidget {
@@ -30,6 +31,12 @@ class ConfiguracionPage extends StatelessWidget {
             title: 'Copias de seguridad',
             subtitle: 'Guarda y restaura los datos de tu negocio',
             onTap: () => _open(context, const BackupPage()),
+          ),
+          _ConfigTile(
+            icon: Icons.cleaning_services_outlined,
+            title: 'Liberar espacio',
+            subtitle: 'Borra las fotos que ningún producto usa',
+            onTap: () => _open(context, const LiberarEspacioPage()),
           ),
           _ConfigTile(
             icon: Icons.privacy_tip_outlined,

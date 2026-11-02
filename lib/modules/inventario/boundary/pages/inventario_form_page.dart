@@ -7,6 +7,7 @@ import 'package:variedadesjm/modules/inventario/entity/inventario.dart';
 import 'package:variedadesjm/modules/zapato/controller/zapato_controller.dart';
 import 'package:variedadesjm/shared/data/catalog_queries.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
+import 'package:variedadesjm/shared/utils/image_store.dart';
 import 'package:variedadesjm/shared/utils/photo_picker.dart';
 import 'package:variedadesjm/shared/widgets/forms/paged_picker.dart';
 import 'package:variedadesjm/shared/widgets/ui/shoe_image.dart';
@@ -38,6 +39,8 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
   String? _idCategoria;
   DateTime _fechaCompra = DateTime.now();
   String? _imagenActualPath;
+  final _fotos = PhotoSession();
+  String? _fotoGuardada;
   bool _guardando = false;
 
   bool get _editando => widget.item != null;
@@ -61,6 +64,8 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
 
   @override
   void dispose() {
+    // Borra las fotos nuevas que no llegaron a guardarse.
+    _fotos.release(keep: _fotoGuardada);
     for (final controller in [
       _modeloController,
       _descripcionController,
@@ -81,7 +86,9 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
 
   Future<void> _seleccionarImagen() async {
     final ruta = await pickShoePhoto(context);
-    if (ruta == null || !mounted) return;
+    if (ruta == null) return;
+    _fotos.register(ruta);
+    if (!mounted) return;
     setState(() => _imagenActualPath = ruta);
   }
 
@@ -155,6 +162,8 @@ class _InventarioFormPageState extends ConsumerState<InventarioFormPage> {
         );
         idZapato = nuevoIdZapato;
       }
+
+      _fotoGuardada = imagenPath;
 
       final controller = ref.read(inventarioControllerProvider.notifier);
       if (_editando) {

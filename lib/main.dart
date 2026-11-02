@@ -6,6 +6,11 @@ import 'package:variedadesjm/shared/themes/app_theme.dart';
 
 /// Punto de entrada de Variedades JM: conecta Riverpod con el tema persistente.
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Límite de memoria para fotos decodificadas (por defecto Flutter permite 100 MB).
+  PaintingBinding.instance.imageCache
+    ..maximumSizeBytes = 50 << 20
+    ..maximumSize = 100;
   // En lugar de la pantalla gris, muestra qué falló para poder corregirlo.
   ErrorWidget.builder = (details) => Material(
         color: const Color(0xFFFFF4F2),
