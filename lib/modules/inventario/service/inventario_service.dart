@@ -264,10 +264,24 @@ class InventarioService {
     FilterParams params, {
     String? idZapato,
     EstadoZapato? estado,
+    List<String>? idsZapatoMarca,
+    List<String>? idsZapatoTexto,
   }) async {
     final results = await Future.wait([
-      _inventarioDao.obtenerInventarioConFiltros(params, idZapato: idZapato, estado: estado),
-      _inventarioDao.contarInventarioConFiltros(params, idZapato: idZapato, estado: estado),
+      _inventarioDao.obtenerInventarioConFiltros(
+        params,
+        idZapato: idZapato,
+        estado: estado,
+        idsZapatoMarca: idsZapatoMarca,
+        idsZapatoTexto: idsZapatoTexto,
+      ),
+      _inventarioDao.contarInventarioConFiltros(
+        params,
+        idZapato: idZapato,
+        estado: estado,
+        idsZapatoMarca: idsZapatoMarca,
+        idsZapatoTexto: idsZapatoTexto,
+      ),
     ]);
 
     final items = results[0] as List<Inventario>;

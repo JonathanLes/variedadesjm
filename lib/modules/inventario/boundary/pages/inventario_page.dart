@@ -15,6 +15,7 @@ import '../../entity/inventario.dart';
 import 'inventario_form_page.dart';
 import 'inventario_detail_page.dart';
 import '../../../zapato/controller/zapato_controller.dart';
+import '../../../marca/controller/marca_controller.dart';
 
 /// Inventario físico: resumen, búsqueda, filtros por estado y cuadrícula de pares.
 class InventarioPage extends ConsumerWidget {
@@ -54,6 +55,9 @@ class InventarioPage extends ConsumerWidget {
     final todas = ref.watch(existenciasProvider).valueOrNull ?? const <Inventario>[];
     final zapatos = ref.watch(zapatosCatalogoProvider).valueOrNull ?? const [];
     final modelos = {for (final zapato in zapatos) zapato.id: zapato};
+    final nombresMarca = {
+      for (final m in ref.watch(marcasCatalogoProvider).valueOrNull ?? const []) m.id: m.nombreMarca,
+    };
     final scheme = Theme.of(context).colorScheme;
 
     final enStock = todas.where((i) => i.estado != EstadoZapato.vendido).toList();
@@ -75,6 +79,7 @@ class InventarioPage extends ConsumerWidget {
                 selected: state.filtroEstado == estado,
                 onSelected: (_) => notifier.aplicarFiltrosEspeciales(
                   idZapato: state.filtroIdZapato,
+                  idMarca: state.filtroIdMarca,
                   estado: estado,
                 ),
               );
@@ -103,7 +108,7 @@ class InventarioPage extends ConsumerWidget {
                         children: [
                           Expanded(
                             child: AppSearchBar(
-                              hintText: 'Buscar por código o color...',
+                              hintText: 'Buscar por código, marca, modelo o color',
                               textCapitalization: TextCapitalization.characters,
                               onChanged: (val) => notifier.buscarInventario(val.toUpperCase()),
                             ),
@@ -170,6 +175,7 @@ class InventarioPage extends ConsumerWidget {
                         sku: item.codigo,
                         modelo: zapato?.modelo ?? item.idZapato,
                         imagenPath: zapato?.imagenPath,
+                        marca: nombresMarca[zapato?.idMarca],
                         detalle: [
                           if ((item.color ?? '').isNotEmpty) item.color!,
                           'Talla ${item.talla} / ${item.cm} cm',

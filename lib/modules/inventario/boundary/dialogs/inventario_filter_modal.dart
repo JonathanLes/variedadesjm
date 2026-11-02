@@ -32,10 +32,16 @@ class _InventarioFilterModalState extends ConsumerState<InventarioFilterModal> {
   final _scrollController = ScrollController();
   final _queryFocusNode = FocusNode();
   String? _idZapato;
+  String? _idMarca;
 
   @override
   void initState() {
     super.initState();
+    // Conserva los filtros ya aplicados al volver a abrir el modal.
+    final actual = ref.read(inventarioControllerProvider).valueOrNull;
+    _idZapato = actual?.filtroIdZapato;
+    _idMarca = actual?.filtroIdMarca;
+    _queryController.text = actual?.filtros.query ?? '';
     _queryFocusNode.addListener(_handleQueryFocus);
   }
 
@@ -71,6 +77,8 @@ class _InventarioFilterModalState extends ConsumerState<InventarioFilterModal> {
   Future<void> _aplicarFiltros(BuildContext context) async {
     await ref.read(inventarioControllerProvider.notifier).aplicarFiltrosEspeciales(
       idZapato: _idZapato,
+      idMarca: _idMarca,
+      estado: ref.read(inventarioControllerProvider).valueOrNull?.filtroEstado,
     );
     await ref.read(inventarioControllerProvider.notifier).buscarInventario(_queryController.text);
     if (context.mounted) Navigator.pop(context);
@@ -129,8 +137,19 @@ class _InventarioFilterModalState extends ConsumerState<InventarioFilterModal> {
             scrollPadding: const EdgeInsets.only(bottom: AppSpacing.lg),
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
-              hintText: 'Buscar por código o color...',
+              hintText: 'Buscar por código, marca, modelo o color',
             ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          PagedPickerField(
+            label: 'Marca',
+            icon: Icons.sell_outlined,
+            hint: 'Todas las marcas',
+            clearable: true,
+            value: _idMarca,
+            fetch: catalogFetch(ref, store: SembastStores.marca, field: 'nombreMarca'),
+            resolve: catalogResolve(ref, store: SembastStores.marca, field: 'nombreMarca'),
+            onChanged: (val) => setState(() => _idMarca = val),
           ),
           const SizedBox(height: AppSpacing.md),
           PagedPickerField(
