@@ -46,6 +46,10 @@ class SpeedDialFab extends StatelessWidget {
     return FloatingActionButton(
       heroTag: 'speed_dial_fab',
       tooltip: 'Nueva operación',
+      // Un poco transparente para ver lo que hay detrás del botón.
+      backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: .78),
+      elevation: 2,
+      highlightElevation: 3,
       onPressed: () => _open(context),
       child: const Icon(Icons.add_rounded, size: 30),
     );
