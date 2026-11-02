@@ -5,6 +5,7 @@ import 'package:variedadesjm/controllers/database/sembast_stores.dart';
 import 'package:variedadesjm/modules/cliente/control/cliente_dao.dart';
 import 'package:variedadesjm/modules/cliente/entity/cliente.dart';
 import 'package:variedadesjm/modules/cliente/service/cliente_service.dart';
+import 'package:variedadesjm/shared/data/app_data_provider.dart';
 import 'package:variedadesjm/shared/models/filter_params.dart';
 
 class ClienteState {
@@ -69,6 +70,10 @@ class ClienteController extends AsyncNotifier<ClienteState> {
     );
   }
 
+  /// Los clientes también se leen en Administración, ventas y reservas: se
+  /// invalidan para que vean el cambio sin reiniciar la app.
+  void _refrescarListasDependientes() => ref.invalidate(clientesProvider);
+
   Future<void> _cargarConFiltros(FilterParams nuevosFiltros) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
@@ -106,6 +111,7 @@ class ClienteController extends AsyncNotifier<ClienteState> {
     final nuevoCliente = await service.crearCliente(
       id: id, nombre: nombre, apellido: apellido, telefono: telefono, direccion: direccion
     );
+    _refrescarListasDependientes();
     
     state = state.whenData((estadoActual) {
       final nuevaLista = [...estadoActual.clientes, nuevoCliente];
@@ -123,6 +129,7 @@ class ClienteController extends AsyncNotifier<ClienteState> {
     final clienteActualizado = await service.actualizarCliente(
       id: id, nombre: nombre, apellido: apellido, telefono: telefono, direccion: direccion
     );
+    _refrescarListasDependientes();
     
     state = state.whenData((estadoActual) {
       final nuevaLista = estadoActual.clientes
@@ -137,6 +144,7 @@ class ClienteController extends AsyncNotifier<ClienteState> {
   Future<void> eliminarCliente(String id) async {
     final service = await ref.read(clienteServiceProvider.future);
     await service.eliminarCliente(id);
+    _refrescarListasDependientes();
     
     state = state.whenData((estadoActual) {
       final nuevaLista = estadoActual.clientes.where((c) => c.id != id).toList();

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:variedadesjm/modules/gasto/boundary/pages/gasto_page.dart';
 import 'package:variedadesjm/modules/inventario/entity/inventario.dart';
+import 'package:variedadesjm/modules/marca/controller/marca_controller.dart';
 import 'package:variedadesjm/modules/reserva/entity/reserva.dart';
 import 'package:variedadesjm/modules/venta/boundary/pages/venta_form_page.dart';
 import 'package:variedadesjm/modules/venta/boundary/pages/venta_page.dart';
@@ -58,6 +59,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final scheme = Theme.of(context).colorScheme;
     final stockById = {for (final item in data.existencias) item.id: item};
     final modelById = {for (final model in models) model.id: model};
+    final brandById = {
+      for (final b in ref.watch(marcasCatalogoProvider).valueOrNull ?? const []) b.id: b.nombreMarca,
+    };
 
     final sales = data.ventas.where((v) => sameDay(v.fechaVenta, _day)).toList();
     final saleIds = sales.map((v) => v.id).toSet();
@@ -173,6 +177,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                         _SaleRow(
                           name: modelById[stockById[lines[i].idInventario]?.idZapato]?.modelo ??
                               'Par vendido',
+                          brand: brandById[modelById[stockById[lines[i].idInventario]?.idZapato]?.idMarca],
                           detail: _detail(stockById[lines[i].idInventario]),
                           price: lines[i].precioVentaFinal,
                           profit: lines[i].precioVentaFinal -
@@ -350,12 +355,14 @@ class _DetailRow extends StatelessWidget {
 
 class _SaleRow extends StatelessWidget {
   final String name;
+  final String? brand;
   final String detail;
   final double price;
   final double profit;
 
   const _SaleRow({
     required this.name,
+    this.brand,
     required this.detail,
     required this.price,
     required this.profit,
@@ -366,7 +373,18 @@ class _SaleRow extends StatelessWidget {
     return ListTile(
       dense: true,
       title: Text(name, style: const TextStyle(fontWeight: FontWeight.w700)),
-      subtitle: Text(detail),
+      subtitle: Text.rich(TextSpan(children: [
+        if (brand != null && brand!.isNotEmpty)
+          TextSpan(
+            text: brand,
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+        if (brand != null && brand!.isNotEmpty && detail.isNotEmpty) const TextSpan(text: ' · '),
+        TextSpan(text: detail),
+      ])),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.end,

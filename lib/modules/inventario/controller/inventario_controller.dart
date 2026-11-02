@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sembast/sembast.dart';
+import 'package:variedadesjm/controllers/database/sembast_stores.dart';
 import 'package:variedadesjm/controllers/providers/sembast_core_providers.dart';
+import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/modules/inventario/control/inventario_dao.dart';
 import 'package:variedadesjm/modules/inventario/entity/inventario.dart';
 import 'package:variedadesjm/modules/inventario/service/inventario_service.dart';
@@ -11,6 +14,7 @@ class InventarioState {
   final int totalItems;
   final FilterParams filtros;
   final String? filtroIdZapato;
+  final String? filtroIdMarca;
   final EstadoZapato? filtroEstado;
 
   InventarioState({
@@ -18,6 +22,7 @@ class InventarioState {
     required this.totalItems,
     required this.filtros,
     this.filtroIdZapato,
+    this.filtroIdMarca,
     this.filtroEstado,
   });
 
@@ -26,8 +31,10 @@ class InventarioState {
     int? totalItems,
     FilterParams? filtros,
     String? filtroIdZapato,
+    String? filtroIdMarca,
     EstadoZapato? filtroEstado,
     bool clearZapato = false,
+    bool clearMarca = false,
     bool clearEstado = false,
   }) {
     return InventarioState(
@@ -35,6 +42,7 @@ class InventarioState {
       totalItems: totalItems ?? this.totalItems,
       filtros: filtros ?? this.filtros,
       filtroIdZapato: clearZapato ? null : (filtroIdZapato ?? this.filtroIdZapato),
+      filtroIdMarca: clearMarca ? null : (filtroIdMarca ?? this.filtroIdMarca),
       filtroEstado: clearEstado ? null : (filtroEstado ?? this.filtroEstado),
     );
   }
@@ -87,24 +95,30 @@ class InventarioController extends AsyncNotifier<InventarioState> {
   Future<void> _cargarConFiltros(
     FilterParams nuevosFiltros, {
     String? idZapato,
+    String? idMarca,
     EstadoZapato? estado,
     bool clearZapato = false,
+    bool clearMarca = false,
     bool clearEstado = false,
   }) async {
     final currentState = state.value;
     if (currentState == null) return;
 
     final nextZapato = clearZapato ? null : (idZapato ?? currentState.filtroIdZapato);
+    final nextMarca = clearMarca ? null : (idMarca ?? currentState.filtroIdMarca);
     final nextEstado = clearEstado ? null : (estado ?? currentState.filtroEstado);
 
     state = const AsyncValue.loading();
 
     state = await AsyncValue.guard(() async {
       final service = await ref.read(inventarioServiceProvider.future);
+      final db = await ref.read(sembastDatabaseProvider.future);
       final (items, total) = await service.obtenerInventarioPaginado(
         nuevosFiltros,
         idZapato: nextZapato,
         estado: nextEstado,
+        idsZapatoMarca: nextMarca == null ? null : await _idsZapatoDeMarca(db, nextMarca),
+        idsZapatoTexto: await _idsZapatoPorTexto(db, nuevosFiltros.query),
       );
 
       return currentState.copyWith(
@@ -112,8 +126,10 @@ class InventarioController extends AsyncNotifier<InventarioState> {
         totalItems: total,
         filtros: nuevosFiltros,
         filtroIdZapato: nextZapato,
+        filtroIdMarca: nextMarca,
         filtroEstado: nextEstado,
         clearZapato: clearZapato,
+        clearMarca: clearMarca,
         clearEstado: clearEstado,
       );
     });
@@ -135,16 +151,53 @@ class InventarioController extends AsyncNotifier<InventarioState> {
   /// 
   /// Reinicia la paginación a la página 1 y activa banderas de limpieza si los parámetros son nulos.
   /// Llama a `_cargarConFiltros` para reflejar la selección en pantalla.
-  Future<void> aplicarFiltrosEspeciales({String? idZapato, EstadoZapato? estado}) async {
+  Future<void> aplicarFiltrosEspeciales({
+    String? idZapato,
+    String? idMarca,
+    EstadoZapato? estado,
+  }) async {
     if (state.value == null) return;
     final nuevosFiltros = state.value!.filtros.resetPage();
     await _cargarConFiltros(
       nuevosFiltros,
       idZapato: idZapato,
+      idMarca: idMarca,
       estado: estado,
       clearZapato: idZapato == null,
+      clearMarca: idMarca == null,
       clearEstado: estado == null,
     );
+  }
+
+  /// Ids de los modelos que pertenecen a una marca (solo claves, sin cargar los registros).
+  Future<List<String>> _idsZapatoDeMarca(Database db, String idMarca) async {
+    final store = stringMapStoreFactory.store(SembastStores.zapato);
+    return store.findKeys(db, finder: Finder(filter: Filter.equals('idMarca', idMarca)));
+  }
+
+  /// Ids de los modelos cuyo nombre, o el de su marca, contiene [query].
+  /// Permite que el buscador del inventario también encuentre por marca y modelo.
+  Future<List<String>> _idsZapatoPorTexto(Database db, String query) async {
+    final needle = AppColors.normalize(query);
+    if (needle.isEmpty) return const [];
+    bool coincide(Object? value) =>
+        AppColors.normalize('${value ?? ''}').contains(needle);
+
+    final marcas = await stringMapStoreFactory
+        .store(SembastStores.marca)
+        .findKeys(db,
+            finder: Finder(
+              filter: Filter.custom((s) => s.value is Map && coincide((s.value as Map)['nombreMarca'])),
+            ));
+    return stringMapStoreFactory.store(SembastStores.zapato).findKeys(
+          db,
+          finder: Finder(
+            filter: Filter.or([
+              Filter.custom((s) => s.value is Map && coincide((s.value as Map)['modelo'])),
+              if (marcas.isNotEmpty) Filter.inList('idMarca', marcas),
+            ]),
+          ),
+        );
   }
 
   /// Navega a la página solicitada manteniendo los filtros aplicados previamente.

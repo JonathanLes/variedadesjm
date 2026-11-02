@@ -7,6 +7,7 @@ import 'inventario_status_badge.dart';
 class InventarioItemCard extends StatelessWidget {
   final String sku;
   final String modelo;
+  final String? marca;
   final String? imagenPath;
   final String detalle;
   final double precio;
@@ -17,6 +18,7 @@ class InventarioItemCard extends StatelessWidget {
     super.key,
     required this.sku,
     required this.modelo,
+    this.marca,
     required this.imagenPath,
     required this.detalle,
     required this.precio,
@@ -46,6 +48,14 @@ class InventarioItemCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+              if (marca != null && marca!.isNotEmpty)
+                Text(marca!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).colorScheme.primary)),
               Text(detalle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

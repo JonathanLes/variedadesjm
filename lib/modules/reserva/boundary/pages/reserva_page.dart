@@ -7,10 +7,13 @@ import 'package:variedadesjm/modules/reserva/boundary/pages/reserva_detail_page.
 import 'package:variedadesjm/modules/reserva/controller/reserva_resumen_provider.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/shared/utils/format.dart';
+import 'package:variedadesjm/shared/widgets/pagination/app_pagination.dart';
 
 enum _Filter { activas, porVencer, canceladas }
 
 enum _Sort { fecha, saldo, nombre }
+
+const _pageSize = 10;
 
 /// Muestra las reservas pendientes y canceladas sin datos de ejemplo.
 class ReservaPage extends ConsumerStatefulWidget {
@@ -24,6 +27,7 @@ class _ReservaPageState extends ConsumerState<ReservaPage> {
   final _search = TextEditingController();
   _Filter _filter = _Filter.activas;
   _Sort _sort = _Sort.fecha;
+  int _page = 1;
 
   @override
   void dispose() {
@@ -83,7 +87,12 @@ class _ReservaPageState extends ConsumerState<ReservaPage> {
         ),
       ),
     );
-    if (selected != null) setState(() => _sort = selected);
+    if (selected != null) {
+      setState(() {
+        _sort = selected;
+        _page = 1;
+      });
+    }
   }
 
   @override
@@ -96,6 +105,10 @@ class _ReservaPageState extends ConsumerState<ReservaPage> {
         error: (error, _) => Center(child: Text('No se pudieron cargar las reservas: $error')),
         data: (all) {
           final list = _apply(all);
+          // Solo se dibujan las 10 reservas de la página actual.
+          final pages = list.isEmpty ? 1 : (list.length / _pageSize).ceil();
+          final page = _page > pages ? pages : _page;
+          final visible = list.skip((page - 1) * _pageSize).take(_pageSize).toList();
           final active = all.where((r) => r.pendiente).length;
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
@@ -105,7 +118,7 @@ class _ReservaPageState extends ConsumerState<ReservaPage> {
                   Expanded(
                     child: TextField(
                       controller: _search,
-                      onChanged: (_) => setState(() {}),
+                      onChanged: (_) => setState(() => _page = 1),
                       decoration: const InputDecoration(
                         hintText: 'Buscar nombre o teléfono',
                         prefixIcon: Icon(Icons.search_rounded),
@@ -127,17 +140,26 @@ class _ReservaPageState extends ConsumerState<ReservaPage> {
                   ChoiceChip(
                     label: Text('Activas · $active'),
                     selected: _filter == _Filter.activas,
-                    onSelected: (_) => setState(() => _filter = _Filter.activas),
+                    onSelected: (_) => setState(() {
+                      _filter = _Filter.activas;
+                      _page = 1;
+                    }),
                   ),
                   ChoiceChip(
                     label: const Text('Por vencer'),
                     selected: _filter == _Filter.porVencer,
-                    onSelected: (_) => setState(() => _filter = _Filter.porVencer),
+                    onSelected: (_) => setState(() {
+                      _filter = _Filter.porVencer;
+                      _page = 1;
+                    }),
                   ),
                   ChoiceChip(
                     label: const Text('Canceladas'),
                     selected: _filter == _Filter.canceladas,
-                    onSelected: (_) => setState(() => _filter = _Filter.canceladas),
+                    onSelected: (_) => setState(() {
+                      _filter = _Filter.canceladas;
+                      _page = 1;
+                    }),
                   ),
                 ],
               ),
@@ -147,8 +169,19 @@ class _ReservaPageState extends ConsumerState<ReservaPage> {
                   padding: EdgeInsets.symmetric(vertical: 60),
                   child: Center(child: Text('No hay reservas que mostrar.')),
                 )
-              else
-                for (final item in list) _ReservaCard(item: item),
+              else ...[
+                for (final item in visible) _ReservaCard(item: item),
+                const SizedBox(height: 6),
+                Center(
+                  child: AppPagination(
+                    currentPage: page,
+                    totalItems: list.length,
+                    pageSize: _pageSize,
+                    itemName: 'reservas',
+                    onPageChanged: (value) => setState(() => _page = value),
+                  ),
+                ),
+              ],
             ],
           );
         },

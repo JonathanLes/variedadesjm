@@ -27,7 +27,13 @@ class InventarioDAO extends SembastDao<Inventario> {
   /// Si el parámetro opcional `estado` es provisto, se filtra convirtiendo el enum a su nombre en `String` 
   /// para hacer coincidir el estado del calzado en base de datos (`activo`, `reservado`, `vendido`).
   /// Finalmente, si existen múltiples filtros los agrupa en una única condición `Filter.and`.
-  Filter? _buildFilter(FilterParams params, {String? idZapato, EstadoZapato? estado}) {
+  Filter? _buildFilter(
+    FilterParams params, {
+    String? idZapato,
+    EstadoZapato? estado,
+    List<String>? idsZapatoMarca,
+    List<String>? idsZapatoTexto,
+  }) {
     final List<Filter> filters = [];
 
     if (params.query.trim().isNotEmpty) {
@@ -37,7 +43,18 @@ class InventarioDAO extends SembastDao<Inventario> {
         Filter.or([
           Filter.matches('codigo', regExp.pattern),
           Filter.matches('color', regExp.pattern),
+          // Modelos o marcas cuyo nombre coincide con el texto buscado.
+          if (idsZapatoTexto != null && idsZapatoTexto.isNotEmpty)
+            Filter.inList('idZapato', idsZapatoTexto),
         ]),
+      );
+    }
+
+    if (idsZapatoMarca != null) {
+      filters.add(
+        idsZapatoMarca.isEmpty
+            ? Filter.custom((_) => false) // la marca no tiene modelos
+            : Filter.inList('idZapato', idsZapatoMarca),
       );
     }
 
@@ -67,9 +84,17 @@ class InventarioDAO extends SembastDao<Inventario> {
     FilterParams params, {
     String? idZapato,
     EstadoZapato? estado,
+    List<String>? idsZapatoMarca,
+    List<String>? idsZapatoTexto,
   }) async {
     try {
-      final filter = _buildFilter(params, idZapato: idZapato, estado: estado);
+      final filter = _buildFilter(
+        params,
+        idZapato: idZapato,
+        estado: estado,
+        idsZapatoMarca: idsZapatoMarca,
+        idsZapatoTexto: idsZapatoTexto,
+      );
       final isAscending = params.sortDirection == SortDirection.asc;
 
       final finder = Finder(
@@ -110,9 +135,17 @@ class InventarioDAO extends SembastDao<Inventario> {
     FilterParams params, {
     String? idZapato,
     EstadoZapato? estado,
+    List<String>? idsZapatoMarca,
+    List<String>? idsZapatoTexto,
   }) async {
     try {
-      final filter = _buildFilter(params, idZapato: idZapato, estado: estado);
+      final filter = _buildFilter(
+        params,
+        idZapato: idZapato,
+        estado: estado,
+        idsZapatoMarca: idsZapatoMarca,
+        idsZapatoTexto: idsZapatoTexto,
+      );
       return await store.count(database, filter: filter);
     } catch (e, stackTrace) {
       Error.throwWithStackTrace(DaoException('Error al contar unidades de inventario', e), stackTrace);
