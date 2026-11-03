@@ -49,6 +49,39 @@ class InventarioPage extends ConsumerWidget {
     }
   }
 
+  /// Hoja para elegir cómo ordenar los pares (fecha de compra o costo).
+  Future<void> _abrirOrden(
+    BuildContext context,
+    InventarioController notifier,
+    InventarioOrden actual,
+  ) async {
+    final elegido = await showModalBottomSheet<InventarioOrden>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: Text('Ordenar por',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+            ),
+            for (final orden in InventarioOrden.values)
+              ListTile(
+                leading: Icon(orden == actual
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_unchecked),
+                title: Text(orden.etiqueta),
+                onTap: () => Navigator.pop(context, orden),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (elegido != null && elegido != actual) await notifier.cambiarOrden(elegido);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final inventario = ref.watch(inventarioControllerProvider);
@@ -114,6 +147,12 @@ class InventarioPage extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
+                          IconButton.filledTonal(
+                            tooltip: 'Ordenar',
+                            icon: const Icon(Icons.swap_vert_rounded),
+                            onPressed: () => _abrirOrden(context, notifier, state.orden),
+                          ),
+                          const SizedBox(width: 4),
                           IconButton.filled(
                             tooltip: 'Más filtros',
                             icon: const Icon(Icons.filter_list_rounded),

@@ -266,6 +266,8 @@ class InventarioService {
     EstadoZapato? estado,
     List<String>? idsZapatoMarca,
     List<String>? idsZapatoTexto,
+    String campoOrden = 'fechaCompra',
+    bool? ascendente,
   }) async {
     final results = await Future.wait([
       _inventarioDao.obtenerInventarioConFiltros(
@@ -274,6 +276,8 @@ class InventarioService {
         estado: estado,
         idsZapatoMarca: idsZapatoMarca,
         idsZapatoTexto: idsZapatoTexto,
+        campoOrden: campoOrden,
+        ascendente: ascendente,
       ),
       _inventarioDao.contarInventarioConFiltros(
         params,

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:variedadesjm/controllers/providers/sembast_core_providers.dart';
+import 'package:variedadesjm/modules/inventario/controller/inventario_controller.dart';
 import 'package:variedadesjm/modules/reserva/controller/reserva_resumen_provider.dart';
 import 'package:variedadesjm/shared/data/app_data_provider.dart';
 import 'package:variedadesjm/shared/data/operation_service.dart';
@@ -35,8 +36,8 @@ class _ReservaDetailPageState extends ConsumerState<ReservaDetailPage> {
       ..invalidate(reservaDetallesProvider)
       ..invalidate(ventasProvider)
       ..invalidate(ventaDetallesProvider)
-      ..invalidate(existenciasProvider)
       ..invalidate(dashboardDataProvider);
+    refrescarInventario(ref);
   }
 
   void _message(String text) {

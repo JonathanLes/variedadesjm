@@ -2,12 +2,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sembast/sembast.dart';
 import 'package:variedadesjm/controllers/database/sembast_stores.dart';
 import 'package:variedadesjm/controllers/providers/sembast_core_providers.dart';
+import 'package:variedadesjm/shared/data/app_data_provider.dart';
 import 'package:variedadesjm/shared/themes/colors.dart';
 import 'package:variedadesjm/modules/inventario/control/inventario_dao.dart';
 import 'package:variedadesjm/modules/inventario/entity/inventario.dart';
 import 'package:variedadesjm/modules/inventario/service/inventario_service.dart';
 import 'package:variedadesjm/shared/models/filter_params.dart';
 import 'package:variedadesjm/modules/zapato/control/zapato_dao.dart';
+
+/// Formas de ordenar el inventario. El costo es lo que se pagó por el par (la inversión).
+enum InventarioOrden {
+  antiguos('Más antiguos primero', 'fechaCompra', true),
+  recientes('Más recientes primero', 'fechaCompra', false),
+  costoMayor('Mayor costo primero (más caro a más barato)', 'precioCompra', false),
+  costoMenor('Menor costo primero (más barato a más caro)', 'precioCompra', true);
+
+  const InventarioOrden(this.etiqueta, this.campo, this.ascendente);
+
+  final String etiqueta;
+  final String campo;
+  final bool ascendente;
+}
 
 class InventarioState {
   final List<Inventario> items;
@@ -16,6 +31,7 @@ class InventarioState {
   final String? filtroIdZapato;
   final String? filtroIdMarca;
   final EstadoZapato? filtroEstado;
+  final InventarioOrden orden;
 
   InventarioState({
     required this.items,
@@ -24,6 +40,7 @@ class InventarioState {
     this.filtroIdZapato,
     this.filtroIdMarca,
     this.filtroEstado,
+    this.orden = InventarioOrden.antiguos,
   });
 
   InventarioState copyWith({
@@ -33,6 +50,7 @@ class InventarioState {
     String? filtroIdZapato,
     String? filtroIdMarca,
     EstadoZapato? filtroEstado,
+    InventarioOrden? orden,
     bool clearZapato = false,
     bool clearMarca = false,
     bool clearEstado = false,
@@ -43,6 +61,7 @@ class InventarioState {
       filtros: filtros ?? this.filtros,
       filtroIdZapato: clearZapato ? null : (filtroIdZapato ?? this.filtroIdZapato),
       filtroIdMarca: clearMarca ? null : (filtroIdMarca ?? this.filtroIdMarca),
+      orden: orden ?? this.orden,
       filtroEstado: clearEstado ? null : (filtroEstado ?? this.filtroEstado),
     );
   }
@@ -100,15 +119,18 @@ class InventarioController extends AsyncNotifier<InventarioState> {
     bool clearZapato = false,
     bool clearMarca = false,
     bool clearEstado = false,
+    InventarioOrden? orden,
+    bool mostrarCarga = true,
   }) async {
     final currentState = state.value;
     if (currentState == null) return;
+    final nextOrden = orden ?? currentState.orden;
 
     final nextZapato = clearZapato ? null : (idZapato ?? currentState.filtroIdZapato);
     final nextMarca = clearMarca ? null : (idMarca ?? currentState.filtroIdMarca);
     final nextEstado = clearEstado ? null : (estado ?? currentState.filtroEstado);
 
-    state = const AsyncValue.loading();
+    if (mostrarCarga) state = const AsyncValue.loading();
 
     state = await AsyncValue.guard(() async {
       final service = await ref.read(inventarioServiceProvider.future);
@@ -119,6 +141,8 @@ class InventarioController extends AsyncNotifier<InventarioState> {
         estado: nextEstado,
         idsZapatoMarca: nextMarca == null ? null : await _idsZapatoDeMarca(db, nextMarca),
         idsZapatoTexto: await _idsZapatoPorTexto(db, nuevosFiltros.query),
+        campoOrden: nextOrden.campo,
+        ascendente: nextOrden.ascendente,
       );
 
       return currentState.copyWith(
@@ -128,6 +152,7 @@ class InventarioController extends AsyncNotifier<InventarioState> {
         filtroIdZapato: nextZapato,
         filtroIdMarca: nextMarca,
         filtroEstado: nextEstado,
+        orden: nextOrden,
         clearZapato: clearZapato,
         clearMarca: clearMarca,
         clearEstado: clearEstado,
@@ -167,6 +192,21 @@ class InventarioController extends AsyncNotifier<InventarioState> {
       clearMarca: idMarca == null,
       clearEstado: estado == null,
     );
+  }
+
+  /// Cambia el orden del listado (fecha o costo) y vuelve a la primera página.
+  Future<void> cambiarOrden(InventarioOrden orden) async {
+    final actual = state.value;
+    if (actual == null) return;
+    await _cargarConFiltros(actual.filtros.resetPage(), orden: orden);
+  }
+
+  /// Vuelve a leer la lista conservando filtros, orden y página. Se usa cuando los
+  /// datos cambiaron fuera de esta pantalla (una venta o reserva cambia el estado de los pares).
+  Future<void> recargar() async {
+    final actual = state.value;
+    if (actual == null) return;
+    await _cargarConFiltros(actual.filtros, mostrarCarga: false);
   }
 
   /// Ids de los modelos que pertenecen a una marca (solo claves, sin cargar los registros).
@@ -307,3 +347,12 @@ class InventarioController extends AsyncNotifier<InventarioState> {
 final inventarioControllerProvider = AsyncNotifierProvider<InventarioController, InventarioState>(() {
   return InventarioController();
 });
+
+/// Avisa a todas las pantallas que el inventario cambió (por ejemplo, tras una venta
+/// o reserva) para que muestren los estados nuevos sin reiniciar la app.
+void refrescarInventario(WidgetRef ref) {
+  ref.invalidate(existenciasProvider);
+  if (ref.exists(inventarioControllerProvider)) {
+    ref.read(inventarioControllerProvider.notifier).recargar();
+  }
+}
