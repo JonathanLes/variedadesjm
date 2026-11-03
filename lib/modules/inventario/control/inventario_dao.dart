@@ -86,6 +86,8 @@ class InventarioDAO extends SembastDao<Inventario> {
     EstadoZapato? estado,
     List<String>? idsZapatoMarca,
     List<String>? idsZapatoTexto,
+    String campoOrden = 'fechaCompra',
+    bool? ascendente,
   }) async {
     try {
       final filter = _buildFilter(
@@ -95,11 +97,12 @@ class InventarioDAO extends SembastDao<Inventario> {
         idsZapatoMarca: idsZapatoMarca,
         idsZapatoTexto: idsZapatoTexto,
       );
-      final isAscending = params.sortDirection == SortDirection.asc;
+      final isAscending = ascendente ?? params.sortDirection == SortDirection.asc;
 
       final finder = Finder(
         filter: filter,
-        sortOrders: [SortOrder('fechaCompra', isAscending)],
+        // La clave desempata para que las páginas no repitan ni salten registros.
+        sortOrders: [SortOrder(campoOrden, isAscending), SortOrder(Field.key)],
         limit: params.pageSize,
         offset: (params.page - 1) * params.pageSize,
       );

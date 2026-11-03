@@ -10,6 +10,7 @@ import 'package:variedadesjm/controllers/providers/sembast_core_providers.dart';
 import 'package:variedadesjm/modules/cliente/boundary/pages/cliente_form_bottom_sheet.dart';
 import 'package:variedadesjm/modules/cliente/entity/cliente.dart';
 import 'package:variedadesjm/modules/inventario/boundary/pages/inventario_form_page.dart';
+import 'package:variedadesjm/modules/inventario/controller/inventario_controller.dart';
 import 'package:variedadesjm/modules/inventario/entity/inventario.dart';
 import 'package:variedadesjm/modules/reserva/entity/reserva.dart';
 import 'package:variedadesjm/modules/reserva_detalle/entity/reserva_detalle.dart';
@@ -229,8 +230,8 @@ class _OperationFormPageState extends ConsumerState<OperationFormPage> {
         ..invalidate(ventaDetallesProvider)
         ..invalidate(reservasProvider)
         ..invalidate(reservaDetallesProvider)
-        ..invalidate(existenciasProvider)
         ..invalidate(dashboardDataProvider);
+      refrescarInventario(ref);
       if (mounted) Navigator.pop(context, true);
     } on InventoryUnavailableException catch (error) {
       if (mounted) _message(error.message);
